@@ -23,12 +23,15 @@ def main():
         help=f"The location of the master.key file (default: {constants.DEFAULT_MASTER_KEY_FILEPATH})",
     )
     parser.add_argument(
-        "command", choices=["init", "get", "edit"], help="Command to run"
+        "command", choices=["init", "get", "set", "edit"], help="Command to run"
     )
     parser.add_argument(
         "key",
         nargs="?",
-        help="When using the 'get' command, you can optionally provide a key to retrieve a specific item",
+    )
+    parser.add_argument(
+        "value",
+        nargs="?",
     )
 
     args = parser.parse_args()
@@ -64,6 +67,16 @@ def main():
             else:
                 for key, value in vault.secrets.items():
                     print(f"{key}: {value}")
+        except exceptions.MasterKeyNotFound:
+            print(
+                f"No master key found. Set it via the environment variable 'MASTER_KEY', or in a file at '{args.master_key_filepath}'"
+            )
+    elif args.command == "set":
+        (args.key and args.value) or parser.error("key and value are required")
+        try:
+            vault = SecretsVault(**kwargs)
+            vault.set(args.key, args.value)
+            vault.persist()
         except exceptions.MasterKeyNotFound:
             print(
                 f"No master key found. Set it via the environment variable 'MASTER_KEY', or in a file at '{args.master_key_filepath}'"

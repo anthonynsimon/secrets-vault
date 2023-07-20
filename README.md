@@ -51,10 +51,40 @@ password = vault.get('my-password')
 
 ## Editing secrets
 
+### Interactive editor
+
 To edit secrets, run `secrets-vault edit`, the file will be decrypted and your editor will open.
+
+```bash
+$ secrets-vault edit
+
+>>> Opening secrets file in editor...
+{
+  "foo": "bar"
+}
+```
 
 Any saved changes will be encrypted and saved to the file on disk when you close the editor.
 
+### CLI command
+
+You can also set secrets from the CLI with a key and value:
+
+```bash
+$ secrets-vault set foo bar
+```
+
+### In code
+
+You can also edit secrets from code:
+
+```python
+from secrets_vault import SecretsVault
+
+vault = SecretsVault()
+vault.set('foo', 'bar')
+vault.persist()
+```
 
 ## Providing the master.key file
 
@@ -94,6 +124,9 @@ vault = SecretsVault(master_key_filepath=..., secrets_filepath=...)
 
 
 ## Changelog
+
+### 0.1.3
+- Add set command
 
 ### 0.1.2
 - Initial release

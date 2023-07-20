@@ -216,6 +216,9 @@ vault = SecretsVault(master_key_filepath=..., secrets_filepath=...)
 
 ## Changelog
 
+### 0.1.6
+- Fix requirements not listed in package
+
 ### 0.1.5
 - Add envify command
 - Refactor CLI tool

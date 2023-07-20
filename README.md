@@ -197,10 +197,10 @@ vault = SecretsVault(master_key=master_key)
 ## Configuring the default filepaths
 
 ### CLI command
-You can also provide them as a CLI argument before any command:
+You can also provide them as a CLI arguments:
 
 ```bash
-$ secrets --master-key-filepath foo1 --secrets-filepath foo2 edit
+$ secrets init --master-key-filepath ./prod/master.key --secrets-filepath ./prod/secrets.json.enc
 ```
 
 ### In Python
@@ -213,25 +213,9 @@ from secrets_vault import SecretsVault
 vault = SecretsVault(master_key_filepath=..., secrets_filepath=...)
 ```
 
-
 ## Changelog
 
-### 0.1.6
-- Fix requirements not listed in package
-
-### 0.1.5
-- Add envify command
-- Refactor CLI tool
-- Breaking Python API changes: persist() has been renamed to save(), and init() has been renamed to create().
-
-### 0.1.4
-- Add del command
-
-### 0.1.3
-- Add set command
-
-### 0.1.2
-- Initial release
+See [CHANGELOG](https://github.com/anthonynsimon/secrets-vault/blob/master/CHANGELOG) for the list of releases and relevant changes.
 
 
 ## Security Disclosure

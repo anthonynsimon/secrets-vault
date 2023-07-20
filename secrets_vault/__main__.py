@@ -2,7 +2,7 @@ import json
 
 import click
 
-from secrets_vault import SecretsVault, exceptions, constants
+from secrets_vault import SecretsVault, exceptions, constants, __version__
 
 common_options = [
     click.option(
@@ -47,6 +47,11 @@ def cli(**kwargs):
     pass
 
 
+@cli.command(help="Show the package version.")
+def version(**kwargs):
+    click.echo(f"secrets-vault v{__version__}")
+
+
 @cli.command(
     help="Generate a new secrets vault and master.key pair. If a secrets vault already exists, this will abort."
 )
@@ -73,7 +78,7 @@ def with_vault(func, secrets_filepath, master_key_filepath):
             f"No master key found. Set it via the environment variable 'MASTER_KEY', or in a file at '{constants.DEFAULT_MASTER_KEY_FILEPATH}'"
         )
     except exceptions.SecretsFileNotFound:
-        click.echo("Secrets file already exists, aborting...")
+        click.echo("Secrets file not found, aborting...")
     exit(1)
 
 

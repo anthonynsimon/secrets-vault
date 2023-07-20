@@ -4,6 +4,4 @@ twine==4.0.2
 wheel==0.40.0
 invoke==2.0.0
 
--r requirements.txt
-
 -e .

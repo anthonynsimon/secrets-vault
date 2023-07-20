@@ -12,9 +12,12 @@ REQUIREMENTS = [
     x.strip() for x in (HERE / "requirements.txt").read_text().split("\n") if not x.startswith("#") and x.strip()
 ]
 
+# Load version without importing anything from the package
+exec(open("secrets_vault/version.py").read())
+
 setup(
     name="secrets-vault",
-    version="0.1.6",
+    version=__version__,
     author="Anthony N. Simon",
     url="https://github.com/anthonynsimon/secrets-vault",
     description="Simple encrypted secrets for Python",

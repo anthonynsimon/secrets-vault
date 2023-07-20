@@ -47,9 +47,7 @@ class SecretsVault:
         Create a new secrets file and returns the master key - keep it safe!
         """
         if Path(secrets_filepath).exists():
-            raise SecretsFileAlreadyExists(
-                f"Secrets file {secrets_filepath} already exists"
-            )
+            raise SecretsFileAlreadyExists(f"Secrets file {secrets_filepath} already exists")
 
         log.info(f"Creating new secrets file {secrets_filepath}")
         Path(secrets_filepath).touch()
@@ -101,11 +99,7 @@ class SecretsVault:
     @staticmethod
     def _load_master_key(master_key_filepath=None):
         master_key = os.environ.get("MASTER_KEY")
-        if (
-            not master_key
-            and master_key_filepath
-            and os.path.exists(master_key_filepath)
-        ):
+        if not master_key and master_key_filepath and os.path.exists(master_key_filepath):
             with open(Path(master_key_filepath).absolute()) as fin:
                 master_key = fin.read().strip()
         if not master_key:
@@ -118,9 +112,7 @@ class SecretsVault:
     def _load_secrets(self):
         log.info(f"Loading encrypted secrets from {self.secrets_filename}")
         if not os.path.exists(self.secrets_filename):
-            raise SecretsFileNotFound(
-                f"Could not find secrets file {self.secrets_filename}"
-            )
+            raise SecretsFileNotFound(f"Could not find secrets file {self.secrets_filename}")
         with open(self.secrets_filename, "r") as fin:
             contents = fin.read()
             if contents:

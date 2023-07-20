@@ -4,14 +4,22 @@ import logging
 from secrets_vault import SecretsVault, exceptions, constants
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        description="Encrypt and decrypt a local secrets file using a master.key"
-    )
+def secrets_key_already_exists():
+    print("Secrets file already exists, skipping init")
+    exit(1)
 
-    parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Enable verbose output"
+
+def no_master_key():
+    print(
+        f"No master key found. Set it via the environment variable 'MASTER_KEY', or in a file at '{args.master_key_filepath}'"
     )
+    exit(1)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Encrypt and decrypt a local secrets file using a master.key")
+
+    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
     parser.add_argument(
         "-s",
         "--secrets-filepath",
@@ -47,18 +55,14 @@ def main():
     if args.command == "init":
         try:
             vault, master_key = SecretsVault.init()
-            print(
-                f"Generated new encryption master key:\n\n{master_key}\n\nKeep it safe! It will not be shown again."
-            )
+            print(f"Generated new encryption master key:\n\n{master_key}\n\nKeep it safe! It will not be shown again.")
         except exceptions.SecretsFileAlreadyExists:
-            print("Secrets file already exists, skipping init")
+            secrets_key_already_exists()
     elif args.command == "edit":
         try:
             SecretsVault(**kwargs).edit_secrets()
         except exceptions.MasterKeyNotFound:
-            print(
-                f"No master key found. Set it via the environment variable 'MASTER_KEY', or in a file at '{args.master_key_filepath}'"
-            )
+            no_master_key()
     elif args.command == "get":
         try:
             vault = SecretsVault(**kwargs)
@@ -68,9 +72,7 @@ def main():
                 for key, value in vault.secrets.items():
                     print(f"{key}: {value}")
         except exceptions.MasterKeyNotFound:
-            print(
-                f"No master key found. Set it via the environment variable 'MASTER_KEY', or in a file at '{args.master_key_filepath}'"
-            )
+            no_master_key()
     elif args.command == "set":
         (args.key and args.value) or parser.error("key and value are required")
         try:
@@ -82,7 +84,8 @@ def main():
                 f"No master key found. Set it via the environment variable 'MASTER_KEY', or in a file at '{args.master_key_filepath}'"
             )
     else:
-        raise NotImplementedError(f"Unknown command {args.command}")
+        print(f"Unknown command {args.command}")
+        exit(1)
 
 
 if __name__ == "__main__":

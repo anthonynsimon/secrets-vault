@@ -3,8 +3,11 @@ import invoke
 
 @invoke.task
 def fmt(ctx, check=False):
-    cmd = "black --check ." if check else "black ."
-    ctx.run(cmd)
+    cmds = ["black", "-l", "120", "-t", "py311"]
+    if check:
+        cmds.append("--check")
+    cmds.append(".")
+    ctx.run(" ".join(cmds))
 
 
 @invoke.task

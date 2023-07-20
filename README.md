@@ -138,7 +138,7 @@ vault.save()
 ```
 
 
-### Printing secrets as environment variables
+## Printing secrets as environment variables
 
 Sometimes you may want to print a secret as environment variables. It will also apply if you have nested objects. You can do so by running:
 

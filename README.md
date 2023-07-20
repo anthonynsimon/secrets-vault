@@ -215,7 +215,7 @@ vault = SecretsVault(master_key_filepath=..., secrets_filepath=...)
 
 ## Changelog
 
-See [CHANGELOG](https://github.com/anthonynsimon/secrets-vault/blob/master/CHANGELOG) for the list of releases and relevant changes.
+See [CHANGELOG](https://github.com/anthonynsimon/secrets-vault/blob/master/CHANGELOG.md) for the list of releases.
 
 
 ## Security Disclosure

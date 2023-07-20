@@ -30,6 +30,7 @@ setup(
     entry_points={
         "console_scripts": [
             "secrets-vault=secrets_vault.__main__:main",
+            "secrets=secrets_vault.__main__:main",
         ]
     },
     tests_require=[],

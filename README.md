@@ -197,10 +197,14 @@ vault = SecretsVault(master_key=master_key)
 ## Configuring the default filepaths
 
 ### CLI command
-You can also provide them as a CLI arguments:
+
+You can also provide them as a CLI arguments before the command:
 
 ```bash
-$ secrets init --master-key-filepath ./prod/master.key --secrets-filepath ./prod/secrets.json.enc
+$ secrets \
+  --master-key-filepath ./prod/master.key \
+  --secrets-filepath ./prod/secrets.json.enc \
+  init
 ```
 
 ### In Python

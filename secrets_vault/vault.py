@@ -50,6 +50,8 @@ class SecretsVault:
             raise SecretsFileAlreadyExists(f"Secrets file {secrets_filepath} already exists")
 
         log.info(f"Creating new secrets file {secrets_filepath}")
+        Path(master_key_filepath).parent.mkdir(parents=True, exist_ok=True)
+        Path(secrets_filepath).parent.mkdir(parents=True, exist_ok=True)
         Path(secrets_filepath).touch()
 
         master_key = Fernet.generate_key().decode()

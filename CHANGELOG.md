@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.1.8
+- Move common params before command
+
 ## 0.1.7
 - Relax requirements constraints
 - Minor CLI tool fixes

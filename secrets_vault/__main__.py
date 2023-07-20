@@ -46,8 +46,7 @@ def main():
 
     kwargs = {
         "secrets_filepath": args.secrets_filepath or constants.DEFAULT_SECRETS_FILEPATH,
-        "master_key_filepath": args.master_key_filepath
-        or constants.DEFAULT_MASTER_KEY_FILEPATH,
+        "master_key_filepath": args.master_key_filepath or constants.DEFAULT_MASTER_KEY_FILEPATH,
     }
 
     logging.basicConfig(level=logging.INFO if args.verbose else logging.ERROR)
@@ -79,10 +78,9 @@ def main():
             vault = SecretsVault(**kwargs)
             vault.set(args.key, args.value)
             vault.persist()
+            no_master_key()
         except exceptions.MasterKeyNotFound:
-            print(
-                f"No master key found. Set it via the environment variable 'MASTER_KEY', or in a file at '{args.master_key_filepath}'"
-            )
+            no_master_key()
     else:
         print(f"Unknown command {args.command}")
         exit(1)

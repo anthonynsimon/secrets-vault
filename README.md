@@ -9,20 +9,44 @@ The vault is JSON encoded and encrypted using [symmetric encryption](https://cry
 ## Quick start
 
 1. Install `pip install secrets-vault`.
-2. Run `secrets-vault init`.
+2. Run `secrets init`.
 3. Two files will be created: `master.key` and `secrets.json.enc`.
-4. You can now edit your secrets by running `secrets-vault edit`, or list them via `secrets-vault get`.
+4. You can now edit your secrets by running `secrets edit`, or list them via `secrets get`.
 
 **Important:** Keep the `master.key` safe. Do NOT commit it to VCS. The `secrets.json.enc` file is safe to commit.
 
 
-## Reading secrets via CLI
+## CLI usage
+
+You can view the help anytime by running `secrets --help`:
+
+```
+Usage: secrets [OPTIONS] COMMAND [ARGS]...
+
+  Manage a local secrets vault.
+
+Options:
+  -m, --master-key-filepath TEXT  Path to the master.key file.
+  -s, --secrets-filepath TEXT     Path to the encrypted secrets vault.
+  --help                          Show this message and exit.
+
+Commands:
+  del     Delete a secret.
+  edit    Open the secrets vault in your configured $EDITOR.
+  envify  Prints a provided secret key as one or more env variables.
+  get     Get one or more secret values.
+  init    Generate a new secrets vault and master.key pair.
+  set     Store a secret.
+```
+
+## Reading secrets
+
+### CLI commands
 
 List all secrets:
 
 ```bash
-$ secrets-vault get
-
+$ secrets get
 > my-user: foo
 > my-password: supersecret
 ```
@@ -30,33 +54,46 @@ $ secrets-vault get
 Get one secret:
 
 ```bash
-$ secrets-vault get my-password
-
+$ secrets get my-password
 > supersecret
 ```
 
+Get multiple secrets:
 
-## Reading secrets from code
+```bash
+$ secrets get my-user my-password
+> my-user: foo
+> my-password: supersecret
+```
+
+
+### In Python
 
 ```python
 from secrets_vault import SecretsVault
 
-
 vault = SecretsVault()
 
 password = vault.get('my-password')
-
 ```
 
 
 ## Editing secrets
 
-### Interactive editor
+### CLI command
 
-To edit secrets, run `secrets-vault edit`, the file will be decrypted and your editor will open.
+You can also set secrets from the CLI with a key and value:
 
 ```bash
-$ secrets-vault edit
+$ secrets set foo bar
+```
+
+### Interactive editor
+
+To edit secrets, run `secrets edit`, the file will be decrypted and your editor will open.
+
+```bash
+$ secrets edit
 
 >>> Opening secrets file in editor...
 {
@@ -66,15 +103,7 @@ $ secrets-vault edit
 
 Any saved changes will be encrypted and saved to the file on disk when you close the editor.
 
-### CLI command
-
-You can also set secrets from the CLI with a key and value:
-
-```bash
-$ secrets-vault set foo bar
-```
-
-### In code
+### In Python
 
 You can also edit secrets from code:
 
@@ -83,25 +112,60 @@ from secrets_vault import SecretsVault
 
 vault = SecretsVault()
 vault.set('foo', 'bar')
-vault.persist()
+vault.save()
 ```
 
-### Deleting secrets
+## Deleting secrets
+
+### CLI command
 
 You can delete secrets from the CLI with a key:
 
 ```bash
-$ secrets-vault del foo
+$ secrets del foo
 ```
 
-Or via the application code like this:
+### In Python
+
+You can achieve the same in Python like this:
 
 ```python
 from secrets_vault import SecretsVault
 
 vault = SecretsVault()
 vault.delete('foo')
-vault.persist()
+vault.save()
+```
+
+
+### Printing secrets as environment variables
+
+Sometimes you may want to print a secret as environment variables. It will also apply if you have nested objects. You can do so by running:
+
+```bash
+$ secrets edit
+
+{
+  "aws-credentials": {
+    "AWS_ACCESS_KEY_ID": "...",
+    "AWS_SECRET_ACCESS_KEY": "..."
+  }
+}
+```
+
+Get will print the secrets as-is:
+
+```bash
+$ secrets get aws-credentials
+> {"AWS_ACCESS_KEY_ID": "...", "AWS_SECRET_ACCESS_KEY": "..."}
+```
+
+Envify will print the secrets ready for consumption as environment variables:
+
+```bash
+$ secrets envify aws-credentials
+> AWS_ACCESS_KEY_ID=...
+> AWS_SECRET_ACCESS_KEY=...
 ```
 
 ## Providing the master.key file
@@ -113,10 +177,10 @@ By default, the vault will look for the master key in a file located at `./maste
 You can also provide it via an environment variable `MASTER_KEY`. For example:
 
 ```bash
-MASTER_KEY=my-super-secret-master-key secrets-vault edit
+MASTER_KEY=my-super-secret-master-key secrets edit
 ```
 
-### In application code
+### In Python
 
 You can load the master_key from anywhere else and provide it when initializing the class:
 
@@ -130,7 +194,16 @@ vault = SecretsVault(master_key=master_key)
 ```
 
 
-### Configuring the default filepaths
+## Configuring the default filepaths
+
+### CLI command
+You can also provide them as a CLI argument before any command:
+
+```bash
+$ secrets --master-key-filepath foo1 --secrets-filepath foo2 edit
+```
+
+### In Python
 
 You can also configure the filepaths at which your `secrets.json.enc` and `master.key` files are located.
 
@@ -142,6 +215,11 @@ vault = SecretsVault(master_key_filepath=..., secrets_filepath=...)
 
 
 ## Changelog
+
+### 0.1.5
+- Add envify command
+- Refactor CLI tool
+- Breaking Python API changes: persist() has been renamed to save(), and init() has been renamed to create().
 
 ### 0.1.4
 - Add del command

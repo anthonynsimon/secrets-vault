@@ -39,7 +39,7 @@ class SecretsVault:
             raise MasterKeyInvalid("Master key is malformed or invalid")
 
     @staticmethod
-    def init(
+    def create(
         secrets_filepath=DEFAULT_SECRETS_FILEPATH,
         master_key_filepath=DEFAULT_MASTER_KEY_FILEPATH,
     ):
@@ -59,7 +59,7 @@ class SecretsVault:
         vault = SecretsVault(master_key, secrets_filepath)
         vault.set("my-user", "foo")
         vault.set("my-password", "supersecret")
-        vault.persist()
+        vault.save()
 
         return vault, master_key
 
@@ -93,9 +93,9 @@ class SecretsVault:
             log.info("No changes applied")
             return
         self.secrets = newsecrets
-        self.persist()
+        self.save()
 
-    def persist(self):
+    def save(self):
         with open(self.secrets_filename, "wb") as fout:
             fout.write(self.fernet.encrypt(self._serialize()))
         log.info(f"Wrote encrypted secrets to {self.secrets_filename}")

@@ -1,96 +1,172 @@
-import argparse
-import logging
+import json
+
+import click
 
 from secrets_vault import SecretsVault, exceptions, constants
 
-
-def secrets_key_already_exists():
-    print("Secrets file already exists, skipping init")
-    exit(1)
-
-
-def no_master_key():
-    print(
-        f"No master key found. Set it via the environment variable 'MASTER_KEY', or in a file at '{args.master_key_filepath}'"
-    )
-    exit(1)
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Encrypt and decrypt a local secrets file using a master.key")
-
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
-    parser.add_argument(
+common_options = [
+    click.option(
         "-s",
         "--secrets-filepath",
-        help=f"The location of the secrets file (default: {constants.DEFAULT_SECRETS_FILEPATH})",
-    )
-    parser.add_argument(
+        default=constants.DEFAULT_SECRETS_FILEPATH,
+        help="Path to the encrypted secrets vault.",
+    ),
+    click.option(
         "-m",
         "--master-key-filepath",
-        help=f"The location of the master.key file (default: {constants.DEFAULT_MASTER_KEY_FILEPATH})",
-    )
-    parser.add_argument("command", choices=["init", "get", "set", "del", "edit"], help="Command to run")
-    parser.add_argument(
-        "key",
-        nargs="?",
-    )
-    parser.add_argument(
-        "value",
-        nargs="?",
-    )
+        default=constants.DEFAULT_MASTER_KEY_FILEPATH,
+        help="Path to the master.key file.",
+    ),
+]
 
-    args = parser.parse_args()
 
-    kwargs = {
-        "secrets_filepath": args.secrets_filepath or constants.DEFAULT_SECRETS_FILEPATH,
-        "master_key_filepath": args.master_key_filepath or constants.DEFAULT_MASTER_KEY_FILEPATH,
-    }
+def add_options(options):
+    def _add_options(func):
+        for option in options:
+            func = option(func)
+        return func
 
-    logging.basicConfig(level=logging.INFO if args.verbose else logging.ERROR)
+    return _add_options
 
-    if args.command == "init":
-        try:
-            vault, master_key = SecretsVault.init()
-            print(f"Generated new encryption master key:\n\n{master_key}\n\nKeep it safe! It will not be shown again.")
-        except exceptions.SecretsFileAlreadyExists:
-            secrets_key_already_exists()
-    elif args.command == "edit":
-        try:
-            SecretsVault(**kwargs).edit_secrets()
-        except exceptions.MasterKeyNotFound:
-            no_master_key()
-    elif args.command == "get":
-        try:
-            vault = SecretsVault(**kwargs)
-            if args.key:
-                print(vault.get(args.key))
-            else:
-                for key, value in vault.secrets.items():
-                    print(f"{key}: {value}")
-        except exceptions.MasterKeyNotFound:
-            no_master_key()
-    elif args.command == "set":
-        (args.key and args.value) or parser.error("key and value are required")
-        try:
-            vault = SecretsVault(**kwargs)
-            vault.set(args.key, args.value)
-            vault.persist()
-            no_master_key()
-        except exceptions.MasterKeyNotFound:
-            no_master_key()
-    elif args.command == "del":
-        args.key or parser.error("key is required")
-        try:
-            vault = SecretsVault(**kwargs)
-            vault.delete(args.key)
-            vault.persist()
-        except exceptions.MasterKeyNotFound:
-            no_master_key()
-    else:
-        print(f"Unknown command {args.command}")
+
+def serialize(v):
+    if not v:
+        return ""
+    if isinstance(v, str):
+        return v
+    if isinstance(v, int):
+        return str(v)
+    if isinstance(v, float):
+        return str(v)
+    return json.dumps(v, default=str, sort_keys=False)
+
+
+@click.group(help="Manage a local secrets vault.")
+@add_options(common_options)
+def cli(**kwargs):
+    pass
+
+
+@cli.command(
+    help="Generate a new secrets vault and master.key pair. If a secrets vault already exists, this will abort."
+)
+@add_options(common_options)
+def init(**kwargs):
+    try:
+        SecretsVault.create(
+            secrets_filepath=kwargs["secrets_filepath"], master_key_filepath=kwargs["master_key_filepath"]
+        )
+        click.echo(f"Generated new secrets vault at {kwargs['secrets_filepath']}")
+        click.echo(f"Generated new master key at {kwargs['master_key_filepath']}")
+    except exceptions.SecretsFileAlreadyExists:
+        print("Secrets file already exists, aborting...")
         exit(1)
 
 
+def with_vault(func, secrets_filepath, master_key_filepath):
+    try:
+        vault = SecretsVault(secrets_filepath=secrets_filepath, master_key_filepath=master_key_filepath)
+        func(vault)
+        exit(0)
+    except exceptions.MasterKeyNotFound:
+        click.echo(
+            f"No master key found. Set it via the environment variable 'MASTER_KEY', or in a file at '{constants.DEFAULT_MASTER_KEY_FILEPATH}'"
+        )
+    except exceptions.SecretsFileNotFound:
+        click.echo("Secrets file already exists, aborting...")
+    exit(1)
+
+
+@cli.command(
+    help="Get one or more secret values. If none are specified, all secrets are printed (eg. `secrets get`). You can also provide multiple keys to retrive more than one secret at a time (eg. secrets get foo1 foo2 foo3)."
+)
+@add_options(common_options)
+@click.argument("key", required=False, nargs=-1)
+def get(key, **kwargs):
+    def handler(vault):
+        if key:
+            if len(key) == 1:
+                click.echo(serialize(vault.get(key[0])))
+            else:
+                for k in key:
+                    click.echo(f"{k}: {serialize(vault.get(k))}")
+        else:
+            for k, v in vault.secrets.items():
+                click.echo(f"{k}: {serialize(v)}")
+
+    with_vault(
+        handler,
+        secrets_filepath=kwargs["secrets_filepath"],
+        master_key_filepath=kwargs["master_key_filepath"],
+    )
+
+
+@cli.command(
+    help="Prints a provided secret key as one or more env variables. In case the value is a nested object, it will flatten the key=value pairs."
+)
+@add_options(common_options)
+@click.argument("key")
+def envify(key, **kwargs):
+    def handler(vault):
+        value = vault.get(key)
+        if isinstance(value, dict):
+            for k, v in value.items():
+                click.echo(f"{k}={serialize(v)}")
+        else:
+            click.echo(f"{key}={serialize(value)}")
+
+    with_vault(
+        handler,
+        secrets_filepath=kwargs["secrets_filepath"],
+        master_key_filepath=kwargs["master_key_filepath"],
+    )
+
+
+@cli.command(
+    help="Store a secret. If the secret already exists, it will be overwritten. For example: `secrets set foo bar`"
+)
+@add_options(common_options)
+@click.argument("key")
+@click.argument("value")
+def set(key, value, **kwargs):
+    def handler(vault):
+        vault.set(key, value)
+        vault.save()
+
+    with_vault(
+        handler,
+        secrets_filepath=kwargs["secrets_filepath"],
+        master_key_filepath=kwargs["master_key_filepath"],
+    )
+
+
+@cli.command("del", help="Delete a secret. For example: `secrets del foo`")
+@add_options(common_options)
+@click.argument("key")
+def delete(key, **kwargs):
+    def handler(vault):
+        vault.delete(key)
+        vault.save()
+
+    with_vault(
+        handler,
+        secrets_filepath=kwargs["secrets_filepath"],
+        master_key_filepath=kwargs["master_key_filepath"],
+    )
+
+
+@cli.command(help="Open the secrets vault in your configured $EDITOR.")
+@add_options(common_options)
+def edit(**kwargs):
+    def handler(vault):
+        vault.edit_secrets()
+
+    with_vault(
+        handler,
+        secrets_filepath=kwargs["secrets_filepath"],
+        master_key_filepath=kwargs["master_key_filepath"],
+    )
+
+
 if __name__ == "__main__":
-    main()
+    cli()

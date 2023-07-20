@@ -12,7 +12,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="secrets-vault",
-    version="0.1.4",
+    version="0.1.5",
     author="Anthony N. Simon",
     url="https://github.com/anthonynsimon/secrets-vault",
     description="Simple encrypted secrets for Python",
@@ -29,8 +29,8 @@ setup(
     include_package_data=True,
     entry_points={
         "console_scripts": [
-            "secrets-vault=secrets_vault.__main__:main",
-            "secrets=secrets_vault.__main__:main",
+            "secrets-vault=secrets_vault.__main__:cli",
+            "secrets=secrets_vault.__main__:cli",
         ]
     },
     tests_require=[],

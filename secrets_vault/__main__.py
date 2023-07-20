@@ -30,9 +30,7 @@ def main():
         "--master-key-filepath",
         help=f"The location of the master.key file (default: {constants.DEFAULT_MASTER_KEY_FILEPATH})",
     )
-    parser.add_argument(
-        "command", choices=["init", "get", "set", "edit"], help="Command to run"
-    )
+    parser.add_argument("command", choices=["init", "get", "set", "del", "edit"], help="Command to run")
     parser.add_argument(
         "key",
         nargs="?",
@@ -79,6 +77,14 @@ def main():
             vault.set(args.key, args.value)
             vault.persist()
             no_master_key()
+        except exceptions.MasterKeyNotFound:
+            no_master_key()
+    elif args.command == "del":
+        args.key or parser.error("key is required")
+        try:
+            vault = SecretsVault(**kwargs)
+            vault.delete(args.key)
+            vault.persist()
         except exceptions.MasterKeyNotFound:
             no_master_key()
     else:

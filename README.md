@@ -86,6 +86,24 @@ vault.set('foo', 'bar')
 vault.persist()
 ```
 
+### Deleting secrets
+
+You can delete secrets from the CLI with a key:
+
+```bash
+$ secrets-vault del foo
+```
+
+Or via the application code like this:
+
+```python
+from secrets_vault import SecretsVault
+
+vault = SecretsVault()
+vault.delete('foo')
+vault.persist()
+```
+
 ## Providing the master.key file
 
 ### File on disk

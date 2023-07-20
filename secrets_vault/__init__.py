@@ -72,6 +72,10 @@ class SecretsVault:
     def set(self, key, value):
         self.secrets[key] = value
 
+    def delete(self, key):
+        if key in self.secrets:
+            del self.secrets[key]
+
     def edit_secrets(self):
         """
         Decrypts and opens the secrets file in an editor. On save, the file is encrypted again.

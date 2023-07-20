@@ -143,6 +143,9 @@ vault = SecretsVault(master_key_filepath=..., secrets_filepath=...)
 
 ## Changelog
 
+### 0.1.4
+- Add del command
+
 ### 0.1.3
 - Add set command
 

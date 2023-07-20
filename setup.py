@@ -12,7 +12,7 @@ README = (HERE / "README.md").read_text()
 
 setup(
     name="secrets-vault",
-    version="0.1.3",
+    version="0.1.4",
     author="Anthony N. Simon",
     url="https://github.com/anthonynsimon/secrets-vault",
     description="Simple encrypted secrets for Python",

@@ -26,17 +26,18 @@ Usage: secrets [OPTIONS] COMMAND [ARGS]...
   Manage a local secrets vault.
 
 Options:
-  -m, --master-key-filepath TEXT  Path to the master.key file.
   -s, --secrets-filepath TEXT     Path to the encrypted secrets vault.
+  -m, --master-key-filepath TEXT  Path to the master.key file.
   --help                          Show this message and exit.
 
 Commands:
-  del     Delete a secret.
-  edit    Open the secrets vault in your configured $EDITOR.
-  envify  Prints a provided secret key as one or more env variables.
-  get     Get one or more secret values.
-  init    Generate a new secrets vault and master.key pair.
-  set     Store a secret.
+  del      Delete a secret.
+  edit     Open the secrets vault in your configured $EDITOR.
+  envify   Prints a provided secret key as one or more env variables.
+  get      Get one or more secret values.
+  init     Generate a new secrets vault and master.key pair.
+  set      Store a secret.
+  version  Show the package version.
 ```
 
 ## Reading secrets

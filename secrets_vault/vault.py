@@ -1,11 +1,14 @@
+import base64
 import json
 import logging
 import os
+import secrets
 import tempfile
 from pathlib import Path
 from subprocess import call
 
-from cryptography.fernet import Fernet, InvalidToken
+from cryptography.exceptions import InvalidTag
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 from secrets_vault.constants import (
     DEFAULT_MASTER_KEY_FILEPATH,
@@ -29,14 +32,12 @@ class SecretsVault:
         master_key_filepath=DEFAULT_MASTER_KEY_FILEPATH,
     ):
         if master_key is None:
-            master_key = self._load_master_key(master_key_filepath)
-        try:
-            self.fernet = Fernet(master_key)
-            self.secrets_filename = secrets_filepath
-            self.secrets = dict()
-            self.load()
-        except InvalidToken:
-            raise MasterKeyInvalid("Master key is malformed or invalid")
+            self.master_key = self._load_master_key(master_key_filepath)
+        else:
+            self.master_key = master_key
+        self.secrets_filename = secrets_filepath
+        self.secrets = dict()
+        self.load()
 
     @classmethod
     def create(
@@ -54,10 +55,7 @@ class SecretsVault:
             fout.write(master_key)
 
         vault = SecretsVault(master_key, secrets_filepath)
-        vault.secrets = {
-            "my-user": "foo",
-            "my-password": "supersecret"
-        }
+        vault.secrets = {"my-user": "foo", "my-password": "supersecret"}
         vault.save()
 
         return vault, master_key
@@ -136,11 +134,22 @@ class SecretsVault:
         return json.dumps(self.secrets, sort_keys=False, indent=4).encode()
 
     def _encrypt(self, contents):
-        return self.fernet.encrypt(contents)
+        try:
+            nonce = secrets.token_bytes(12)
+            key = bytes.fromhex(self.master_key)
+            ciphertext = nonce + AESGCM(key).encrypt(nonce, contents, b"")
+            return base64.b64encode(ciphertext)
+        except (InvalidTag, ValueError):
+            raise MasterKeyInvalid("The master key is invalid. Make sure it is set and you are using the correct one.")
 
     def _decrypt(self, contents):
-        return self.fernet.decrypt(contents)
+        try:
+            key = bytes.fromhex(self.master_key)
+            ciphertext = base64.b64decode(contents)
+            return AESGCM(key).decrypt(ciphertext[:12], ciphertext[12:], b"")
+        except (InvalidTag, ValueError):
+            raise MasterKeyInvalid("The master key is invalid. Make sure it is set and you are using the correct one.")
 
     @staticmethod
     def _generate_master_key():
-        return Fernet.generate_key().decode()
+        return AESGCM.generate_key(bit_length=256).hex()

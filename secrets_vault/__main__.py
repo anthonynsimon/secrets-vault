@@ -65,14 +65,9 @@ def with_vault(ctx, func):
             secrets_filepath=ctx.obj["secrets_filepath"], master_key_filepath=ctx.obj["master_key_filepath"]
         )
         func(vault)
-        exit(0)
-    except exceptions.MasterKeyNotFound:
-        click.echo(
-            f"No master key found. Set it via the environment variable 'MASTER_KEY', or in a file at '{constants.DEFAULT_MASTER_KEY_FILEPATH}'"
-        )
-    except exceptions.SecretsFileNotFound:
-        click.echo("Secrets file not found, aborting...")
-    exit(1)
+    except (exceptions.MasterKeyNotFound, exceptions.SecretsFileNotFound, exceptions.MasterKeyInvalid) as e:
+        click.echo(str(e))
+        exit(1)
 
 
 @cli.command(

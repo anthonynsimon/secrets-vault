@@ -15,7 +15,7 @@ def test_create():
 
     assert os.path.exists(TEST_DATA_DIR / "secrets-1.json.enc")
     assert os.path.exists(TEST_DATA_DIR / "master-1.key")
-    assert master_key is not None and len(master_key) == 44
+    assert master_key is not None and len(master_key) == 64
     with open(TEST_DATA_DIR / "master-1.key", "rb") as fin:
         assert fin.read().decode() == master_key
 

@@ -4,7 +4,7 @@ Simple encrypted secrets for Python.
 
 Inspired by Rails encrypted secrets. It can be used as a standalone CLI tool or as a library. 
 
-The vault is JSON encoded and encrypted using [AES-128-CBC symmetric encryption](https://cryptography.io/en/latest/fernet/).
+The vault is JSON encoded and encrypted using [AES-256-GCM symmetric encryption](https://cryptography.io/en/latest/hazmat/primitives/aead/#cryptography.hazmat.primitives.ciphers.aead.AESCCM).
 
 ## Quick start
 

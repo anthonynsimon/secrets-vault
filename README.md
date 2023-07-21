@@ -204,6 +204,10 @@ master_key = 'my-super-secret-master-key'
 vault = SecretsVault(master_key=master_key)
 ```
 
+The order of precedence for the master key is:
+1. Provided via the constructor
+2. Provided via the `MASTER_KEY` environment variable
+3. Loaded from the file on disk
 
 ## Configuring the default filepaths
 

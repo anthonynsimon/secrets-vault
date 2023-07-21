@@ -1,6 +1,6 @@
 # Changelog
 
-## Next
+## 0.1.9
 - Breaking change: Change encryption backend to AES-256-GCM
 - Add `--export` option to envify.
 - Update docs

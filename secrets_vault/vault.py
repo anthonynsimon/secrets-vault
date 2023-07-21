@@ -34,36 +34,42 @@ class SecretsVault:
             self.fernet = Fernet(master_key)
             self.secrets_filename = secrets_filepath
             self.secrets = dict()
-            self._load_secrets()
+            self.load()
         except InvalidToken:
             raise MasterKeyInvalid("Master key is malformed or invalid")
 
-    @staticmethod
+    @classmethod
     def create(
+        cls,
         secrets_filepath=DEFAULT_SECRETS_FILEPATH,
         master_key_filepath=DEFAULT_MASTER_KEY_FILEPATH,
     ):
         """
         Create a new secrets file and returns the master key - keep it safe!
         """
-        if Path(secrets_filepath).exists():
-            raise SecretsFileAlreadyExists(f"Secrets file {secrets_filepath} already exists")
+        cls._prepare_dirs(master_key_filepath, secrets_filepath)
 
-        log.info(f"Creating new secrets file {secrets_filepath}")
-        Path(master_key_filepath).parent.mkdir(parents=True, exist_ok=True)
-        Path(secrets_filepath).parent.mkdir(parents=True, exist_ok=True)
-        Path(secrets_filepath).touch()
-
-        master_key = Fernet.generate_key().decode()
+        master_key = cls._generate_master_key()
         with open(master_key_filepath, "w") as fout:
             fout.write(master_key)
 
         vault = SecretsVault(master_key, secrets_filepath)
-        vault.set("my-user", "foo")
-        vault.set("my-password", "supersecret")
+        vault.secrets = {
+            "my-user": "foo",
+            "my-password": "supersecret"
+        }
         vault.save()
 
         return vault, master_key
+
+    @classmethod
+    def _prepare_dirs(cls, master_key_filepath, secrets_filepath):
+        if Path(secrets_filepath).exists():
+            raise SecretsFileAlreadyExists(f"Secrets file {secrets_filepath} already exists")
+        log.info(f"Creating new secrets file {secrets_filepath}")
+        Path(master_key_filepath).parent.mkdir(parents=True, exist_ok=True)
+        Path(secrets_filepath).parent.mkdir(parents=True, exist_ok=True)
+        Path(secrets_filepath).touch()
 
     def require(self, key):
         return self.secrets[key]
@@ -82,7 +88,7 @@ class SecretsVault:
         """
         Decrypts and opens the secrets file in an editor. On save, the file is encrypted again.
         """
-        self._load_secrets()
+        self.load()
         EDITOR = os.environ.get("EDITOR", "vim").split(" ")  # 'could be "code --wait"'
         with tempfile.NamedTemporaryFile(suffix=".tmp.yml") as tf:
             tf.write(self._serialize())
@@ -99,7 +105,7 @@ class SecretsVault:
 
     def save(self):
         with open(self.secrets_filename, "wb") as fout:
-            fout.write(self.fernet.encrypt(self._serialize()))
+            fout.write(self._encrypt(self._serialize()))
         log.info(f"Wrote encrypted secrets to {self.secrets_filename}")
 
     @staticmethod
@@ -115,16 +121,26 @@ class SecretsVault:
             )
         return master_key
 
-    def _load_secrets(self):
+    def load(self):
         log.info(f"Loading encrypted secrets from {self.secrets_filename}")
         if not os.path.exists(self.secrets_filename):
             raise SecretsFileNotFound(f"Could not find secrets file {self.secrets_filename}")
         with open(self.secrets_filename, "r") as fin:
             contents = fin.read()
             if contents:
-                self.secrets = json.loads(self.fernet.decrypt(contents))
+                self.secrets = json.loads(self._decrypt(contents))
             else:
                 self.secrets = dict()
 
     def _serialize(self):
         return json.dumps(self.secrets, sort_keys=False, indent=4).encode()
+
+    def _encrypt(self, contents):
+        return self.fernet.encrypt(contents)
+
+    def _decrypt(self, contents):
+        return self.fernet.decrypt(contents)
+
+    @staticmethod
+    def _generate_master_key():
+        return Fernet.generate_key().decode()

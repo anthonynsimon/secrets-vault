@@ -1,22 +1,17 @@
-import base64
 import json
 import logging
 import os
-import secrets
 import tempfile
 from pathlib import Path
 from subprocess import call
 
-from cryptography.exceptions import InvalidTag
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-
+from secrets_vault.backends import AES256GCMBackend
 from secrets_vault.constants import (
     DEFAULT_MASTER_KEY_FILEPATH,
     DEFAULT_SECRETS_FILEPATH,
 )
 from secrets_vault.exceptions import (
     MasterKeyNotFound,
-    MasterKeyInvalid,
     SecretsFileNotFound,
     SecretsFileAlreadyExists,
 )
@@ -30,12 +25,14 @@ class SecretsVault:
         master_key=None,
         secrets_filepath=DEFAULT_SECRETS_FILEPATH,
         master_key_filepath=DEFAULT_MASTER_KEY_FILEPATH,
+        backend=AES256GCMBackend,
     ):
         if master_key is None:
             self.master_key = self._load_master_key(master_key_filepath)
         else:
             self.master_key = master_key
         self.secrets_filename = secrets_filepath
+        self.backend = backend(self.master_key)
         self.secrets = dict()
         self.load()
 
@@ -44,13 +41,14 @@ class SecretsVault:
         cls,
         secrets_filepath=DEFAULT_SECRETS_FILEPATH,
         master_key_filepath=DEFAULT_MASTER_KEY_FILEPATH,
+        backend=AES256GCMBackend,
     ):
         """
         Create a new secrets file and returns the master key - keep it safe!
         """
         cls._prepare_dirs(master_key_filepath, secrets_filepath)
 
-        master_key = cls._generate_master_key()
+        master_key = backend.generate_master_key()
         with open(master_key_filepath, "w") as fout:
             fout.write(master_key)
 
@@ -59,15 +57,6 @@ class SecretsVault:
         vault.save()
 
         return vault, master_key
-
-    @classmethod
-    def _prepare_dirs(cls, master_key_filepath, secrets_filepath):
-        if Path(secrets_filepath).exists():
-            raise SecretsFileAlreadyExists(f"Secrets file {secrets_filepath} already exists")
-        log.info(f"Creating new secrets file {secrets_filepath}")
-        Path(master_key_filepath).parent.mkdir(parents=True, exist_ok=True)
-        Path(secrets_filepath).parent.mkdir(parents=True, exist_ok=True)
-        Path(secrets_filepath).touch()
 
     def require(self, key):
         return self.secrets[key]
@@ -86,31 +75,46 @@ class SecretsVault:
         """
         Decrypts and opens the secrets file in an editor. On save, the file is encrypted again.
         """
+        editor = os.environ.get("EDITOR", "").split(" ")  # 'could be "code --wait"'
+        if not editor:
+            raise RuntimeError("No interactive editor set. Set it as an environment variable 'EDITOR'")
+
         self.load()
-        EDITOR = os.environ.get("EDITOR", "vim").split(" ")  # 'could be "code --wait"'
         with tempfile.NamedTemporaryFile(suffix=".tmp.yml") as tf:
             tf.write(self._serialize())
             tf.flush()
-            call([*EDITOR, tf.name])
+            call([*editor, tf.name])
             tf.seek(0)
             newsecrets = json.loads(tf.read())
 
         if self.secrets == newsecrets:
             log.info("No changes applied")
             return
+
         self.secrets = newsecrets
         self.save()
 
     def save(self):
         with open(self.secrets_filename, "wb") as fout:
-            fout.write(self._encrypt(self._serialize()))
+            fout.write(self.backend.encrypt(self._serialize()))
         log.info(f"Wrote encrypted secrets to {self.secrets_filename}")
 
+    def load(self):
+        log.info(f"Loading encrypted secrets from {self.secrets_filename}")
+        if not os.path.exists(self.secrets_filename):
+            raise SecretsFileNotFound(f"Could not find secrets file {self.secrets_filename}")
+        with open(self.secrets_filename, "rb") as fin:
+            contents = fin.read()
+            if contents:
+                self.secrets = json.loads(self.backend.decrypt(contents))
+            else:
+                self.secrets = dict()
+
     @staticmethod
-    def _load_master_key(master_key_filepath=None):
+    def _load_master_key(master_key_filepath=None) -> str:
         master_key = os.environ.get("MASTER_KEY")
         if not master_key and master_key_filepath and os.path.exists(master_key_filepath):
-            with open(Path(master_key_filepath).absolute()) as fin:
+            with open(Path(master_key_filepath).absolute(), "r") as fin:
                 master_key = fin.read().strip()
         if not master_key:
             raise MasterKeyNotFound(
@@ -119,37 +123,14 @@ class SecretsVault:
             )
         return master_key
 
-    def load(self):
-        log.info(f"Loading encrypted secrets from {self.secrets_filename}")
-        if not os.path.exists(self.secrets_filename):
-            raise SecretsFileNotFound(f"Could not find secrets file {self.secrets_filename}")
-        with open(self.secrets_filename, "r") as fin:
-            contents = fin.read()
-            if contents:
-                self.secrets = json.loads(self._decrypt(contents))
-            else:
-                self.secrets = dict()
-
-    def _serialize(self):
+    def _serialize(self) -> bytes:
         return json.dumps(self.secrets, sort_keys=False, indent=4).encode()
 
-    def _encrypt(self, contents):
-        try:
-            nonce = secrets.token_bytes(12)
-            key = bytes.fromhex(self.master_key)
-            ciphertext = nonce + AESGCM(key).encrypt(nonce, contents, b"")
-            return base64.b64encode(ciphertext)
-        except (InvalidTag, ValueError):
-            raise MasterKeyInvalid("The master key is invalid. Make sure it is set and you are using the correct one.")
-
-    def _decrypt(self, contents):
-        try:
-            key = bytes.fromhex(self.master_key)
-            ciphertext = base64.b64decode(contents)
-            return AESGCM(key).decrypt(ciphertext[:12], ciphertext[12:], b"")
-        except (InvalidTag, ValueError):
-            raise MasterKeyInvalid("The master key is invalid. Make sure it is set and you are using the correct one.")
-
-    @staticmethod
-    def _generate_master_key():
-        return AESGCM.generate_key(bit_length=256).hex()
+    @classmethod
+    def _prepare_dirs(cls, master_key_filepath, secrets_filepath):
+        if Path(secrets_filepath).exists():
+            raise SecretsFileAlreadyExists(f"Secrets file {secrets_filepath} already exists")
+        log.info(f"Creating new secrets file {secrets_filepath}")
+        Path(master_key_filepath).parent.mkdir(parents=True, exist_ok=True)
+        Path(secrets_filepath).parent.mkdir(parents=True, exist_ok=True)
+        Path(secrets_filepath).touch()

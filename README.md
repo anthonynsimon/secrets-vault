@@ -2,18 +2,23 @@
 
 Simple encrypted secrets for Python.
 
-Inspired by Rails encrypted secrets, but for Python. It can be used as a standalone CLI tool or as a library. 
+Inspired by Rails encrypted secrets. It can be used as a standalone CLI tool or as a library. 
 
-The vault is JSON encoded and encrypted using [symmetric encryption](https://cryptography.io/en/latest/fernet/).
+The vault is JSON encoded and encrypted using [AES-128-CBC symmetric encryption](https://cryptography.io/en/latest/fernet/).
 
 ## Quick start
 
 1. Install `pip install secrets-vault`.
-2. Run `secrets init`.
-3. Two files will be created: `master.key` and `secrets.json.enc`.
-4. You can now edit your secrets by running `secrets edit`, or list them via `secrets get`.
+2. Run init:
+```
+$ secrets init
+Generated new secrets vault at ./secrets.json.enc
+Generated new master key at ./master.key - keep it safe!
+```
+3. Add the `master.key` file to your `.gitignore` file.
+4. You can now edit your secrets by running `secrets edit`.
 
-**Important:** Keep the `master.key` safe. Do NOT commit it to VCS. The `secrets.json.enc` file is safe to commit.
+> **Important:** Keep the `master.key` safe. Do NOT commit it to VCS. The `secrets.json.enc` file is safe to commit.
 
 
 ## CLI usage
@@ -70,6 +75,8 @@ $ secrets get my-user my-password
 
 ### In Python
 
+Simply call `get` with the key. Note that if the secret is missing it will return `None`
+
 ```python
 from secrets_vault import SecretsVault
 
@@ -83,7 +90,7 @@ password = vault.get('my-password')
 
 ### CLI command
 
-You can also set secrets from the CLI with a key and value:
+You can set secrets from the CLI with a key and value:
 
 ```bash
 $ secrets set foo bar
@@ -181,6 +188,9 @@ You can also provide it via an environment variable `MASTER_KEY`. For example:
 MASTER_KEY=my-super-secret-master-key secrets edit
 ```
 
+When a master key is provided via an environment variable, it takes precedence over the file on disk.
+
+
 ### In Python
 
 You can load the master_key from anywhere else and provide it when initializing the class:
@@ -207,6 +217,8 @@ $ secrets \
   --secrets-filepath ./prod/secrets.json.enc \
   init
 ```
+
+This can be used to separate your secrets by environments such as `prod`, `staging`, `dev`, each having with their own key.
 
 ### In Python
 

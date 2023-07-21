@@ -53,7 +53,7 @@ def init(ctx):
             secrets_filepath=ctx.obj["secrets_filepath"], master_key_filepath=ctx.obj["master_key_filepath"]
         )
         click.echo(f"Generated new secrets vault at {ctx.obj['secrets_filepath']}")
-        click.echo(f"Generated new master key at {ctx.obj['master_key_filepath']}")
+        click.echo(f"Generated new master key at {ctx.obj['master_key_filepath']} - keep it safe!")
     except exceptions.SecretsFileAlreadyExists:
         print("Secrets file already exists, aborting...")
         exit(1)

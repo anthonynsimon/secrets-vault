@@ -23,12 +23,14 @@ def serialize(v):
     "--secrets-filepath",
     default=constants.DEFAULT_SECRETS_FILEPATH,
     help="Path to the encrypted secrets vault.",
+    show_default=True,
 )
 @click.option(
     "-m",
     "--master-key-filepath",
     default=constants.DEFAULT_MASTER_KEY_FILEPATH,
     help="Path to the master.key file.",
+    show_default=True,
 )
 @click.pass_context
 def cli(ctx, **kwargs):
@@ -97,15 +99,16 @@ def get(ctx, key):
     help="Prints a provided secret key as one or more env variables. In case the value is a nested object, it will flatten the key=value pairs."
 )
 @click.argument("key")
+@click.option("--export", is_flag=True, help="Include the export modified for each environment variable.")
 @click.pass_context
-def envify(ctx, key):
+def envify(ctx, key, export):
     def handler(vault):
         value = vault.get(key)
         if isinstance(value, dict):
             for k, v in value.items():
-                click.echo(f"{k}={serialize(v)}")
+                click.echo(f"{'export ' if export else ''}{k}={serialize(v)}")
         else:
-            click.echo(f"{key}={serialize(value)}")
+            click.echo(f"{'export ' if export else ''}{key}={serialize(value)}")
 
     with_vault(ctx, handler)
 

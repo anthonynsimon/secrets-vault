@@ -1,5 +1,8 @@
 # Changelog
 
+## Next
+- Add `--export` option to envify.
+
 ## 0.1.8
 - Move common params before command
 

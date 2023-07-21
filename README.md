@@ -8,25 +8,46 @@ The vault is JSON encoded and encrypted using [AES-GCM-256 authenticated encrypt
 
 ## Quick start
 
-> **Important:** You should keep the `master.key` secret. Ignore it in your `.gitignore` file. The `secrets.json.enc` file is safe to commit.
+1. Install it:
+```bash
+$ pip install secrets-vault
+```
 
-1. Install `pip install secrets-vault`.
-2. Run init:
-    ```bash
-    $ secrets init
-    Generated new secrets vault at ./secrets.json.enc
-    Generated new master key at ./master.key - keep it safe!
-    ``` 
-3. You can now edit your secrets:
-   ```bash
-    $ secrets edit
-   
-    >> Opening secrets file in editor...
-    {
-      "foo": "bar"
-    }
-    ```
+2. Create a new vault:
+ ```bash
+ $ secrets init
+ 
+ Generated new secrets vault at ./secrets.json.enc
+ Generated new master key at ./master.key - keep it safe!
+ ``` 
 
+3. Edit secrets:
+```bash
+$ secrets edit
+
+>> Opening secrets file in editor...
+{
+  "foo": "bar"
+}
+```
+
+4. Read secrets:
+
+```bash
+# Via CLI
+$ secrets get foo
+> bar
+```
+
+```python
+# In Python
+from secrets_vault import SecretsVault
+
+vault = SecretsVault()
+foo = vault.get('foo')
+```
+
+**Important:** You should keep the `master.key` secret, do NOT commit it. Ignore it in your `.gitignore` file. The `secrets.json.enc` file is encrypted and can be committed.
 
 ## CLI usage
 

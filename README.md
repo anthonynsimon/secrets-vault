@@ -4,21 +4,28 @@ Simple encrypted secrets for Python.
 
 Inspired by Rails encrypted secrets. It can be used as a standalone CLI tool or as a library. 
 
-The vault is JSON encoded and encrypted using [AES-256-GCM symmetric encryption](https://cryptography.io/en/latest/hazmat/primitives/aead/#cryptography.hazmat.primitives.ciphers.aead.AESGCM).
+The vault is JSON encoded and encrypted using [AES-GCM-256 authenticated encryption](https://cryptography.io/en/latest/hazmat/primitives/aead/#cryptography.hazmat.primitives.ciphers.aead.AESGCM).
 
 ## Quick start
 
+> **Important:** You should keep the `master.key` secret. Ignore it in your `.gitignore` file. The `secrets.json.enc` file is safe to commit.
+
 1. Install `pip install secrets-vault`.
 2. Run init:
-```
-$ secrets init
-Generated new secrets vault at ./secrets.json.enc
-Generated new master key at ./master.key - keep it safe!
-```
-3. Add the `master.key` file to your `.gitignore` file.
-4. You can now edit your secrets by running `secrets edit`.
-
-> **Important:** Keep the `master.key` safe. Do NOT commit it to VCS. The `secrets.json.enc` file is safe to commit.
+    ```bash
+    $ secrets init
+    Generated new secrets vault at ./secrets.json.enc
+    Generated new master key at ./master.key - keep it safe!
+    ``` 
+3. You can now edit your secrets:
+   ```bash
+    $ secrets edit
+   
+    >> Opening secrets file in editor...
+    {
+      "foo": "bar"
+    }
+    ```
 
 
 ## CLI usage
@@ -103,7 +110,7 @@ To edit secrets, run `secrets edit`, the file will be decrypted and your editor 
 ```bash
 $ secrets edit
 
->>> Opening secrets file in editor...
+>> Opening secrets file in editor...
 {
   "foo": "bar"
 }

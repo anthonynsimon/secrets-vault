@@ -1,0 +1,10 @@
+FROM python:2.7
+
+WORKDIR /workspace
+
+RUN pip install -U pip
+RUN pip install cryptography==3.3.2 pytest
+
+COPY . .
+
+CMD ["pytest", "-sv", "tests/test_backwards_compat.py"]

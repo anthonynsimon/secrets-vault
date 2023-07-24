@@ -5,10 +5,10 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 
 def test_vault_can_be_read_without_lib():
-    with open('tests/fixtures/master.key', 'rb') as fin:
+    with open("tests/fixtures/master.key", "rb") as fin:
         master_key = str(fin.read().decode())
 
-    with open('tests/fixtures/secrets.json.enc', 'rb') as fin:
+    with open("tests/fixtures/secrets.json.enc", "rb") as fin:
         encrypted_blob = str(fin.read().decode())
 
     key = bytearray.fromhex(master_key)

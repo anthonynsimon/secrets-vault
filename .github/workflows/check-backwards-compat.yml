@@ -8,11 +8,10 @@ on:
 
 jobs:
   check:
-
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
 
     - name: Check py27 can read fileformat without lib
-      run: check.yml
+      run: bin/test-backwards-compat

@@ -13,7 +13,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10"]
+        python-version: ["3.9", "3.10", "3.11"]
+        cryptography-version: ["38.0.4", "41.0.2"]
 
     steps:
     - uses: actions/checkout@v2
@@ -27,6 +28,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install -r requirements-dev.txt
+        pip install cryptography==${{ matrix.cryptography-version }}
 
     - name: Check codebase
       run: inv fmt --check && inv test

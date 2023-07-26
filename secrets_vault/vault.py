@@ -1,9 +1,9 @@
 import json
 import logging
 import os
+import subprocess
 import tempfile
 from pathlib import Path
-from subprocess import call
 
 from secrets_vault.backends import AES256GCMBackend
 from secrets_vault.constants import (
@@ -14,6 +14,7 @@ from secrets_vault.exceptions import (
     MasterKeyNotFound,
     SecretsFileNotFound,
     SecretsFileAlreadyExists,
+    MalformedSecretsFile,
 )
 
 log = logging.getLogger(__name__)
@@ -79,13 +80,20 @@ class SecretsVault:
         if not editor:
             raise RuntimeError("No interactive editor set. Set it as an environment variable 'EDITOR'")
 
-        self.load()
-        with tempfile.NamedTemporaryFile(suffix=".tmp.yml") as tf:
-            tf.write(self._serialize())
-            tf.flush()
-            call([*editor, tf.name])
-            tf.seek(0)
-            newsecrets = json.loads(tf.read())
+        filedesc, filename = tempfile.mkstemp()
+
+        with open(filedesc, "w+b") as fout:
+            fout.write(self._serialize())
+
+        status = subprocess.call([*editor, filename])
+        if status != 0:
+            raise RuntimeError("Editor returned non-zero status code")
+
+        with open(filename, "rb") as fin:
+            try:
+                newsecrets = json.loads(fin.read())
+            except json.JSONDecodeError as e:
+                raise MalformedSecretsFile(f"Could not parse secrets file: {e}")
 
         if self.secrets == newsecrets:
             log.info("No changes applied")

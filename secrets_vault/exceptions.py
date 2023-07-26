@@ -16,3 +16,7 @@ class SecretsFileNotFound(SecretsStoreException):
 
 class SecretsFileAlreadyExists(SecretsStoreException):
     pass
+
+
+class MalformedSecretsFile(SecretsStoreException):
+    pass

@@ -1,4 +1,5 @@
 import json
+import logging
 
 import click
 
@@ -32,9 +33,16 @@ def serialize(v):
     help="Path to the master.key file.",
     show_default=True,
 )
+@click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    help="Enable verbose output.",
+)
 @click.pass_context
 def cli(ctx, **kwargs):
     ctx.obj = kwargs
+    logging.basicConfig(level=logging.INFO if kwargs["verbose"] else logging.ERROR)
 
 
 @cli.command(help="Show the package version.")
@@ -65,7 +73,12 @@ def with_vault(ctx, func):
             secrets_filepath=ctx.obj["secrets_filepath"], master_key_filepath=ctx.obj["master_key_filepath"]
         )
         func(vault)
-    except (exceptions.MasterKeyNotFound, exceptions.SecretsFileNotFound, exceptions.MasterKeyInvalid) as e:
+    except (
+        exceptions.MasterKeyNotFound,
+        exceptions.SecretsFileNotFound,
+        exceptions.MasterKeyInvalid,
+        exceptions.MalformedSecretsFile,
+    ) as e:
         click.echo(str(e))
         exit(1)
 

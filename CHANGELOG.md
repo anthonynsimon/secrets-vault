@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.11
+- Fix editor mode
+- Add --verbose flag
+- Minor fixes and improvements
+
 ## 0.1.10
 - Relax library constraints
 

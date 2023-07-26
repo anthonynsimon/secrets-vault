@@ -1,8 +1,8 @@
 # secrets-vault
 
-Simple encrypted secrets for Python.
+Keep your app secrets encrypted in-repo, automatically decrypt on local dev or deploy.
 
-Inspired by Rails encrypted secrets. It can be used as a standalone CLI tool or as a library. 
+Inspired by Rails credentials - it pairs nicely with [mrsk](https://mrsk.dev). But it can be used as a standalone CLI tool or as a library. 
 
 The vault is JSON encoded and encrypted using [AES-GCM-256 authenticated encryption](https://cryptography.io/en/latest/hazmat/primitives/aead/#cryptography.hazmat.primitives.ciphers.aead.AESGCM).
 

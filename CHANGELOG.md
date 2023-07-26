@@ -1,5 +1,8 @@
 # Changelog
 
+## next
+- Cleanup temp files used in editor mode
+
 ## 0.1.11
 - Fix editor mode
 - Add --verbose flag

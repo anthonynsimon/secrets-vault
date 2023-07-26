@@ -80,27 +80,29 @@ class SecretsVault:
         if not editor:
             raise RuntimeError("No interactive editor set. Set it as an environment variable 'EDITOR'")
 
-        filedesc, filename = tempfile.mkstemp()
+        filedesc, filename = tempfile.mkstemp(suffix=".json")
+        try:
+            with open(filedesc, "w+b") as fout:
+                fout.write(self._serialize())
 
-        with open(filedesc, "w+b") as fout:
-            fout.write(self._serialize())
+            status = subprocess.call([*editor, filename])
+            if status != 0:
+                raise RuntimeError("Editor returned non-zero status code")
 
-        status = subprocess.call([*editor, filename])
-        if status != 0:
-            raise RuntimeError("Editor returned non-zero status code")
+            with open(filename, "rb") as fin:
+                try:
+                    newsecrets = json.loads(fin.read())
+                except json.JSONDecodeError as e:
+                    raise MalformedSecretsFile(f"Could not parse secrets file: {e}")
 
-        with open(filename, "rb") as fin:
-            try:
-                newsecrets = json.loads(fin.read())
-            except json.JSONDecodeError as e:
-                raise MalformedSecretsFile(f"Could not parse secrets file: {e}")
+            if self.secrets == newsecrets:
+                log.info("No changes applied")
+                return
 
-        if self.secrets == newsecrets:
-            log.info("No changes applied")
-            return
-
-        self.secrets = newsecrets
-        self.save()
+            self.secrets = newsecrets
+            self.save()
+        finally:
+            os.remove(filename)
 
     def save(self):
         with open(self.secrets_filename, "wb") as fout:

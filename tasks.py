@@ -15,6 +15,10 @@ def test(ctx):
     ctx.run("rm -rf tests/test-data")
     ctx.run("mkdir -p tests/test-data")
     ctx.run("pytest -v -s")
+
+
+@invoke.task
+def test_py2_compat(ctx):
     ctx.run("docker build -f Dockerfile.py27 -t secrets-py27 . && docker run secrets-py27")
 
 

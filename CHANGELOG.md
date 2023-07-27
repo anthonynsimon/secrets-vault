@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.3
+- When using the edit command, only persist the vault if there were changes (incl. comments)
+
 ## 0.2.2
 - Add support to envify entire vault
 

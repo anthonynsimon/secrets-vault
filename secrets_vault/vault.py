@@ -6,21 +6,10 @@ import tempfile
 from io import BytesIO
 from pathlib import Path
 
-from ruamel.yaml import YAML
 import pydash
-from secrets_vault.backends import AES256GCMBackend
-from secrets_vault.constants import (
-    DEFAULT_MASTER_KEY_FILEPATH,
-    DEFAULT_SECRETS_FILEPATH,
-    DEFAULT_FILE_FORMAT,
-    UNSET,
-)
-from secrets_vault.exceptions import (
-    MasterKeyNotFound,
-    SecretsFileNotFound,
-    SecretsFileAlreadyExists,
-    MalformedSecretsFile,
-)
+from ruamel.yaml import YAML
+
+from secrets_vault import exceptions, constants
 
 log = logging.getLogger(__name__)
 
@@ -29,10 +18,10 @@ class SecretsVault:
     def __init__(
         self,
         master_key=None,
-        secrets_filepath=DEFAULT_SECRETS_FILEPATH,
-        master_key_filepath=DEFAULT_MASTER_KEY_FILEPATH,
-        backend=AES256GCMBackend,
-        file_format=DEFAULT_FILE_FORMAT,
+        secrets_filepath=constants.DEFAULT_SECRETS_FILEPATH,
+        master_key_filepath=constants.DEFAULT_MASTER_KEY_FILEPATH,
+        backend=constants.DEFAULT_BACKEND,
+        file_format=constants.DEFAULT_FILE_FORMAT,
     ):
         assert file_format in {"yaml", "json"}, "Format must be either 'yaml' or 'json'"
         self.file_format = file_format
@@ -49,10 +38,10 @@ class SecretsVault:
     @classmethod
     def create(
         cls,
-        secrets_filepath=DEFAULT_SECRETS_FILEPATH,
-        master_key_filepath=DEFAULT_MASTER_KEY_FILEPATH,
-        backend=AES256GCMBackend,
-        file_format=DEFAULT_FILE_FORMAT,
+        secrets_filepath=constants.DEFAULT_SECRETS_FILEPATH,
+        master_key_filepath=constants.DEFAULT_MASTER_KEY_FILEPATH,
+        backend=constants.AES256GCMBackend,
+        file_format=constants.DEFAULT_FILE_FORMAT,
     ):
         """
         Create a new secrets file and returns the master key - keep it safe!
@@ -73,8 +62,8 @@ class SecretsVault:
         return vault, master_key
 
     def require(self, key):
-        value = self.get(key, default=UNSET)
-        if value == UNSET:
+        value = self.get(key, default=constants.UNSET)
+        if value == constants.UNSET:
             raise KeyError(f"Secret {key} not found in secrets vault")
         return value
 
@@ -110,7 +99,11 @@ class SecretsVault:
                 try:
                     newsecrets = self._deserialize(fin.read())
                 except Exception as e:
-                    raise MalformedSecretsFile(f"Could not parse secrets file: {e}")
+                    raise exceptions.MalformedSecretsFile(f"Could not parse secrets file: {e}")
+
+            if self._serialize(newsecrets) == self._serialize(self.secrets):
+                log.info("No changes detected")
+                return
 
             self.secrets = newsecrets
             self.save()
@@ -125,7 +118,7 @@ class SecretsVault:
     def load(self):
         log.info(f"Loading encrypted secrets from {self.secrets_filename}")
         if not os.path.exists(self.secrets_filename):
-            raise SecretsFileNotFound(f"Could not find secrets file {self.secrets_filename}")
+            raise exceptions.SecretsFileNotFound(f"Could not find secrets file {self.secrets_filename}")
         with open(self.secrets_filename, "rb") as fin:
             contents = fin.read()
             if contents:
@@ -140,7 +133,7 @@ class SecretsVault:
             with open(Path(master_key_filepath).absolute(), "r") as fin:
                 master_key = fin.read().strip()
         if not master_key:
-            raise MasterKeyNotFound(
+            raise exceptions.MasterKeyNotFound(
                 "Could not find encryption master key. "
                 f"Set it as an environment variable 'MASTER_KEY', or in a file '{master_key_filepath}'"
             )
@@ -169,7 +162,7 @@ class SecretsVault:
     @classmethod
     def _prepare_dirs(cls, master_key_filepath, secrets_filepath):
         if Path(secrets_filepath).exists():
-            raise SecretsFileAlreadyExists(f"Secrets file {secrets_filepath} already exists")
+            raise exceptions.SecretsFileAlreadyExists(f"Secrets file {secrets_filepath} already exists")
         log.info(f"Creating new secrets file {secrets_filepath}")
         Path(master_key_filepath).parent.mkdir(parents=True, exist_ok=True)
         Path(secrets_filepath).parent.mkdir(parents=True, exist_ok=True)
@@ -178,17 +171,6 @@ class SecretsVault:
     @classmethod
     def _get_example(cls, file_format):
         if file_format == "json":
-            return json.dumps(
-                {
-                    "app": {"secret-key": "abc123"},
-                    "database-url": "postgres://user:pass@localhost:5432/dev",
-                }
-            )
+            return constants.EXAMPLE_SECRETS_JSON
         elif file_format == "yaml":
-            return """
-# Add your secrets below, comments are supported too.
-# app:
-#     secret-key: abc123
-
-database-url: postgres://user:pass@localhost:5432/dev
-""".strip()
+            return constants.EXAMPLE_SECRETS_YAML

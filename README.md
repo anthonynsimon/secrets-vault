@@ -206,26 +206,49 @@ Sometimes you may want to print a secret as environment variables. It will also 
 ```bash
 $ secrets edit
 
-dev:
-  aws-credentials:
-    AWS_ACCESS_KEY_ID: ..."
-    AWS_SECRET_ACCESS_KEY: ...
+aws-credentials:
+    aws-access-key-id: abc123
+    aws-secret-access-key: abc456
 ```
 
 Get will print the secrets as-is:
 
 ```bash
-$ secrets get dev.aws-credentials
-AWS_ACCESS_KEY_ID: ..."
-AWS_SECRET_ACCESS_KEY: ...
+$ secrets get aws-credentials
+
+aws-access-key-id: abc123
+aws-secret-access-key: abc456
 ```
 
 Envify will print the secrets ready for consumption as environment variables:
 
 ```bash
-$ secrets envify --export dev.aws-credentials
-> export AWS_ACCESS_KEY_ID=...
-> export AWS_SECRET_ACCESS_KEY=...
+$ secrets envify aws-credentials
+
+AWS_ACCESS_KEY_ID=abc123
+AWS_SECRET_ACCESS_KEY=abc456
+```
+
+A few conventions are applied:
+- The key is uppercased
+- Dashes are replaced with underscores
+- Values are serialized as plain-text (eg. strings and numbers) 
+- Objects are JSON encoded (eg. lists and dicts) 
+
+You can then use it in your shell like this:
+
+```bash
+$ $(secrets envify --export aws-credentials)
+$ echo $AWS_ACCESS_KEY_ID
+
+abc123
+```
+
+Or dump multiple secrets to a dotenv file:
+
+```bash
+$ secrets envify aws-credentials >> .env
+$ secrets envify database-url >> .env
 ```
 
 ## Providing the master.key file

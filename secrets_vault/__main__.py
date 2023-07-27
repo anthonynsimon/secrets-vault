@@ -135,7 +135,9 @@ def get(ctx, key):
 @click.option("--export", is_flag=True, help="Include the export modified for each environment variable.")
 @click.pass_context
 def envify(ctx, key, export):
-    puts = lambda k, v: click.echo(f"{'export ' if export else ''}{k.upper()}={serialize(v, 'dotenv')}")
+    puts = lambda k, v: click.echo(
+        f"{'export ' if export else ''}{k.upper().replace('-', '_')}={serialize(v, 'dotenv')}"
+    )
 
     def handler(vault):
         value = vault.get(key)

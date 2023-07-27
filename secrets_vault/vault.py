@@ -3,13 +3,17 @@ import logging
 import os
 import subprocess
 import tempfile
+from io import BytesIO
 from pathlib import Path
 
+from ruamel.yaml import YAML
 import pydash
 from secrets_vault.backends import AES256GCMBackend
 from secrets_vault.constants import (
     DEFAULT_MASTER_KEY_FILEPATH,
     DEFAULT_SECRETS_FILEPATH,
+    DEFAULT_FILE_FORMAT,
+    UNSET,
 )
 from secrets_vault.exceptions import (
     MasterKeyNotFound,
@@ -28,7 +32,11 @@ class SecretsVault:
         secrets_filepath=DEFAULT_SECRETS_FILEPATH,
         master_key_filepath=DEFAULT_MASTER_KEY_FILEPATH,
         backend=AES256GCMBackend,
+        file_format=DEFAULT_FILE_FORMAT,
     ):
+        assert file_format in {"yaml", "json"}, "Format must be either 'yaml' or 'json'"
+        self.file_format = file_format
+
         if master_key is None:
             self.master_key = self._load_master_key(master_key_filepath)
         else:
@@ -44,6 +52,7 @@ class SecretsVault:
         secrets_filepath=DEFAULT_SECRETS_FILEPATH,
         master_key_filepath=DEFAULT_MASTER_KEY_FILEPATH,
         backend=AES256GCMBackend,
+        file_format=DEFAULT_FILE_FORMAT,
     ):
         """
         Create a new secrets file and returns the master key - keep it safe!
@@ -54,8 +63,11 @@ class SecretsVault:
         with open(master_key_filepath, "w") as fout:
             fout.write(master_key)
 
-        vault = SecretsVault(master_key, secrets_filepath)
-        vault.secrets = {"my-user": "foo", "my-password": "supersecret"}
+        vault = SecretsVault(master_key=master_key, secrets_filepath=secrets_filepath, file_format=file_format)
+
+        example = cls._get_example(file_format)
+
+        vault.secrets = vault._deserialize(example.encode())
         vault.save()
 
         return vault, master_key
@@ -85,10 +97,10 @@ class SecretsVault:
         if not editor:
             raise RuntimeError("No interactive editor set. Set it as an environment variable 'EDITOR'")
 
-        filedesc, filename = tempfile.mkstemp(suffix=".json")
+        filedesc, filename = tempfile.mkstemp(suffix=".yml")
         try:
             with open(filedesc, "w+b") as fout:
-                fout.write(self._serialize())
+                fout.write(self._serialize(self.secrets))
 
             status = subprocess.call([*editor, filename])
             if status != 0:
@@ -96,13 +108,9 @@ class SecretsVault:
 
             with open(filename, "rb") as fin:
                 try:
-                    newsecrets = json.loads(fin.read())
-                except json.JSONDecodeError as e:
+                    newsecrets = self._deserialize(fin.read())
+                except Exception as e:
                     raise MalformedSecretsFile(f"Could not parse secrets file: {e}")
-
-            if self.secrets == newsecrets:
-                log.info("No changes applied")
-                return
 
             self.secrets = newsecrets
             self.save()
@@ -111,7 +119,7 @@ class SecretsVault:
 
     def save(self):
         with open(self.secrets_filename, "wb") as fout:
-            fout.write(self.backend.encrypt(self._serialize()))
+            fout.write(self.backend.encrypt(self._serialize(self.secrets)))
         log.info(f"Wrote encrypted secrets to {self.secrets_filename}")
 
     def load(self):
@@ -121,7 +129,7 @@ class SecretsVault:
         with open(self.secrets_filename, "rb") as fin:
             contents = fin.read()
             if contents:
-                self.secrets = json.loads(self.backend.decrypt(contents))
+                self.secrets = self._deserialize(self.backend.decrypt(contents))
             else:
                 self.secrets = dict()
 
@@ -138,8 +146,25 @@ class SecretsVault:
             )
         return master_key
 
-    def _serialize(self) -> bytes:
-        return json.dumps(self.secrets, sort_keys=False, indent=4).encode()
+    def _deserialize(self, data: bytes) -> dict:
+        if self.file_format in {"yaml", "json"}:
+            yaml = YAML(typ="rt")
+            fin = BytesIO(data)
+            return yaml.load(fin)
+        raise NotImplementedError(f"Unknown file_format {self.file_format}")
+
+    def _serialize(self, data: dict) -> bytes:
+        if self.file_format == "json":
+            return json.dumps(data, indent=4).encode()
+        elif self.file_format == "yaml":
+            yaml = YAML(typ="rt")
+            fout = BytesIO()
+            yaml.dump(data, fout)
+            result = fout.getvalue()
+            fout.close()
+            return result
+
+        raise NotImplementedError(f"Unknown file_format {self.file_format}")
 
     @classmethod
     def _prepare_dirs(cls, master_key_filepath, secrets_filepath):
@@ -149,3 +174,21 @@ class SecretsVault:
         Path(master_key_filepath).parent.mkdir(parents=True, exist_ok=True)
         Path(secrets_filepath).parent.mkdir(parents=True, exist_ok=True)
         Path(secrets_filepath).touch()
+
+    @classmethod
+    def _get_example(cls, file_format):
+        if file_format == "json":
+            return json.dumps(
+                {
+                    "django": {"secret_key": "abc"},
+                    "database_url": "supersecret",
+                }
+            )
+        elif file_format == "yaml":
+            return """
+# Add your secrets below, comments are supported too.
+# django:
+#     secret_key: abc
+
+database_url: supersecret
+""".strip()

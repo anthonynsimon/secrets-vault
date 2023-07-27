@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.0
+- Add support for yaml encoded vault files (new default). To use the old json format, pass `--format json` to the CLI.
+
 ## 0.1.12
 - Auto-delete any temp files created during edit command
 - Add support for nested paths in get/set commands

@@ -4,7 +4,7 @@ Keep your app secrets encrypted in-repo, automatically decrypt on local dev or d
 
 Inspired by Rails credentials - it pairs nicely with [mrsk](https://mrsk.dev). But it can be used as a standalone CLI tool or as a library. 
 
-The vault is JSON encoded and encrypted using [AES-GCM-256 authenticated encryption](https://cryptography.io/en/latest/hazmat/primitives/aead/#cryptography.hazmat.primitives.ciphers.aead.AESGCM).
+The vault is YAML encoded and encrypted using [AES-GCM-256 authenticated encryption](https://cryptography.io/en/latest/hazmat/primitives/aead/#cryptography.hazmat.primitives.ciphers.aead.AESGCM).
 
 ## Quick start
 
@@ -15,10 +15,10 @@ $ pip install secrets-vault
 
 2. Create a new vault:
  ```bash
- $ secrets init
- 
- Generated new secrets vault at ./secrets.json.enc
- Generated new master key at ./master.key - keep it safe!
+$ secrets init
+
+Generated new secrets vault at ./secrets.yml.enc
+Generated new master key at ./master.key - keep it safe!
  ``` 
 
 3. Edit secrets:
@@ -26,17 +26,20 @@ $ pip install secrets-vault
 $ secrets edit
 
 >> Opening secrets file in editor...
-{
-  "foo": "bar"
-}
+
+# Add your secrets below, comments are supported too.
+# django:
+#     secret_key: abc
+#
+# database_url: supersecret
 ```
 
 4. Read secrets:
 
 ```bash
 # Via CLI
-$ secrets get foo
-> bar
+$ secrets get database_url
+> supersecret
 ```
 
 ```python
@@ -44,10 +47,10 @@ $ secrets get foo
 from secrets_vault import SecretsVault
 
 vault = SecretsVault()
-foo = vault.get('foo')
+foo = vault.get('database_url')
 ```
 
-**Important:** You should keep the `master.key` secret, do NOT commit it. Ignore it in your `.gitignore` file. The `secrets.json.enc` file is encrypted and can be committed.
+**Important:** You should keep the `master.key` secret, do NOT commit it. Ignore it in your `.gitignore` file. The `secrets.yml.enc` file is encrypted and can be committed.
 
 ## CLI usage
 
@@ -60,7 +63,12 @@ Usage: secrets [OPTIONS] COMMAND [ARGS]...
 
 Options:
   -s, --secrets-filepath TEXT     Path to the encrypted secrets vault.
-  -m, --master-key-filepath TEXT  Path to the master.key file.
+                                  [default: ./secrets.yml.enc]
+  -m, --master-key-filepath TEXT  Path to the master.key file.  [default:
+                                  ./master.key]
+  -f, --format [yaml|json]        Format to use for the secrets vault.
+                                  [default: yaml]
+  -v, --verbose                   Enable verbose output.
   --help                          Show this message and exit.
 
 Commands:
@@ -81,14 +89,18 @@ List all secrets:
 
 ```bash
 $ secrets get
-> my-user: foo
-> my-password: supersecret
+
+# Add your secrets below, comments are supported too.
+# django:
+#     secret_key: abc
+#
+# database_url: supersecret
 ```
 
 Get a secret:
 
 ```bash
-$ secrets get my-password
+$ secrets get database_url
 > supersecret
 ```
 
@@ -97,26 +109,17 @@ Traverse nested objects:
 ```bash
 $ secrets get
 
-{
-  "dev": {
-    "admins": [
-      "admin0@example.com",
-      "admin1@example.com",
-      "admin2@example.com"
-    ]
-  },
-  "prod": {
-    "admins": [
-      "admin5@example.com",
-    ]
-  }
-}
+django:
+ secret_key: abc
+ admins: [zero, one, two three]
+
+database_url: supersecret
 ```
 
 ```bash
-$ secrets get dev.admins.2
+$ secrets get django.admins.2
 
-> admin2@example.com
+> two
 ```
 
 
@@ -129,7 +132,7 @@ from secrets_vault import SecretsVault
 
 vault = SecretsVault()
 
-password = vault.get('my-password')
+admins = vault.get('django.admins')
 ```
 
 
@@ -151,9 +154,12 @@ To edit secrets, run `secrets edit`, the file will be decrypted and your editor 
 $ secrets edit
 
 >> Opening secrets file in editor...
-{
-  "foo": "bar"
-}
+
+# Add your secrets below, comments are supported too.
+# django:
+#     secret_key: abc
+#
+# database_url: supersecret
 ```
 
 Any saved changes will be encrypted and saved to the file on disk when you close the editor.
@@ -200,27 +206,26 @@ Sometimes you may want to print a secret as environment variables. It will also 
 ```bash
 $ secrets edit
 
-{
-  "aws-credentials": {
-    "AWS_ACCESS_KEY_ID": "...",
-    "AWS_SECRET_ACCESS_KEY": "..."
-  }
-}
+dev:
+  aws-credentials:
+    AWS_ACCESS_KEY_ID: ..."
+    AWS_SECRET_ACCESS_KEY: ...
 ```
 
 Get will print the secrets as-is:
 
 ```bash
-$ secrets get aws-credentials
-> {"AWS_ACCESS_KEY_ID": "...", "AWS_SECRET_ACCESS_KEY": "..."}
+$ secrets get dev.aws-credentials
+AWS_ACCESS_KEY_ID: ..."
+AWS_SECRET_ACCESS_KEY: ...
 ```
 
 Envify will print the secrets ready for consumption as environment variables:
 
 ```bash
-$ secrets envify aws-credentials
-> AWS_ACCESS_KEY_ID=...
-> AWS_SECRET_ACCESS_KEY=...
+$ secrets envify --export dev.aws-credentials
+> export AWS_ACCESS_KEY_ID=...
+> export AWS_SECRET_ACCESS_KEY=...
 ```
 
 ## Providing the master.key file
@@ -265,7 +270,7 @@ You can also provide them as a CLI arguments before the command:
 ```bash
 $ secrets \
   --master-key-filepath ./prod/master.key \
-  --secrets-filepath ./prod/secrets.json.enc \
+  --secrets-filepath ./prod/secrets.yml.enc \
   init
 ```
 
@@ -273,7 +278,7 @@ This can be used to separate your secrets by environments such as `prod`, `stagi
 
 ### In Python
 
-You can also configure the filepaths at which your `secrets.json.enc` and `master.key` files are located.
+You can also configure the filepaths at which your `secrets.yml.enc` and `master.key` files are located.
 
 ```python
 from secrets_vault import SecretsVault

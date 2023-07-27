@@ -1,12 +1,16 @@
 import json
 import logging
+from io import BytesIO
 
 import click
+from ruamel.yaml import YAML
 
 from secrets_vault import SecretsVault, exceptions, constants, __version__
 
 
-def serialize(v):
+def serialize(v, format="yaml"):
+    assert format in {"yaml", "json", "dotenv"}
+
     if not v:
         return ""
     if isinstance(v, str):
@@ -15,7 +19,19 @@ def serialize(v):
         return str(v)
     if isinstance(v, float):
         return str(v)
-    return json.dumps(v, default=str, sort_keys=False)
+    if format == "json":
+        return json.dumps(v, indent=2, default=str, sort_keys=False)
+    if format == "dotenv":
+        # encode non-value objects as json for use in env vars
+        return json.dumps(v, default=str, sort_keys=False)
+    if format == "yaml":
+        fout = BytesIO()
+        yaml = YAML(typ="rt")
+        yaml.dump(v, fout)
+        result = fout.getvalue().decode()
+        fout.close()
+        return result.strip()
+    raise NotImplementedError(f"Unsupported format: {format}")
 
 
 @click.group(help="Manage a local secrets vault.")
@@ -31,6 +47,14 @@ def serialize(v):
     "--master-key-filepath",
     default=constants.DEFAULT_MASTER_KEY_FILEPATH,
     help="Path to the master.key file.",
+    show_default=True,
+)
+@click.option(
+    "-f",
+    "--format",
+    default=constants.DEFAULT_FILE_FORMAT,
+    help="Format to use for the secrets vault.",
+    type=click.Choice(["yaml", "json"]),
     show_default=True,
 )
 @click.option(
@@ -58,7 +82,9 @@ def version(ctx):
 def init(ctx):
     try:
         SecretsVault.create(
-            secrets_filepath=ctx.obj["secrets_filepath"], master_key_filepath=ctx.obj["master_key_filepath"]
+            secrets_filepath=ctx.obj["secrets_filepath"],
+            master_key_filepath=ctx.obj["master_key_filepath"],
+            file_format=ctx.obj["format"],
         )
         click.echo(f"Generated new secrets vault at {ctx.obj['secrets_filepath']}")
         click.echo(f"Generated new master key at {ctx.obj['master_key_filepath']} - keep it safe!")
@@ -70,7 +96,9 @@ def init(ctx):
 def with_vault(ctx, func):
     try:
         vault = SecretsVault(
-            secrets_filepath=ctx.obj["secrets_filepath"], master_key_filepath=ctx.obj["master_key_filepath"]
+            secrets_filepath=ctx.obj["secrets_filepath"],
+            master_key_filepath=ctx.obj["master_key_filepath"],
+            file_format=ctx.obj["format"],
         )
         func(vault)
     except (
@@ -87,12 +115,15 @@ def with_vault(ctx, func):
 @click.argument("key", required=False)
 @click.pass_context
 def get(ctx, key):
+    fformat = ctx.obj["format"]
+
     def handler(vault):
         if key:
-            item = vault.get(key, default="")
-            click.echo(serialize(item))
+            result = vault.get(key, default="")
         else:
-            click.echo(serialize(vault.secrets))
+            result = vault.secrets
+
+        click.echo(serialize(result, fformat))
 
     with_vault(ctx, handler)
 
@@ -104,13 +135,15 @@ def get(ctx, key):
 @click.option("--export", is_flag=True, help="Include the export modified for each environment variable.")
 @click.pass_context
 def envify(ctx, key, export):
+    puts = lambda k, v: click.echo(f"{'export ' if export else ''}{k.upper()}={serialize(v, 'dotenv')}")
+
     def handler(vault):
         value = vault.get(key)
         if isinstance(value, dict):
             for k, v in value.items():
-                click.echo(f"{'export ' if export else ''}{k}={serialize(v)}")
+                puts(k, v)
         else:
-            click.echo(f"{'export ' if export else ''}{key}={serialize(value)}")
+            puts(key, value)
 
     with_vault(ctx, handler)
 

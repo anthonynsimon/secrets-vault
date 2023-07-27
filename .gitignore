@@ -161,5 +161,6 @@ cython_debug/
 # Test data
 master.key
 secrets.json.enc
+secrets.yml.enc
 tests/test-data/*
 !tests/fixtures/*

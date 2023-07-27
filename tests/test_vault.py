@@ -9,32 +9,32 @@ TEST_DATA_DIR = BASE_DIR / "test-data"
 
 def test_create():
     vault, master_key = SecretsVault.create(
-        secrets_filepath=TEST_DATA_DIR / "secrets-1.json.enc",
+        secrets_filepath=TEST_DATA_DIR / "secrets-1.yml.enc",
         master_key_filepath=TEST_DATA_DIR / "master-1.key",
     )
 
-    assert os.path.exists(TEST_DATA_DIR / "secrets-1.json.enc")
+    assert os.path.exists(TEST_DATA_DIR / "secrets-1.yml.enc")
     assert os.path.exists(TEST_DATA_DIR / "master-1.key")
     assert master_key is not None and len(master_key) == 64
     with open(TEST_DATA_DIR / "master-1.key", "rb") as fin:
         assert fin.read().decode() == master_key
 
     vault = SecretsVault(
-        secrets_filepath=TEST_DATA_DIR / "secrets-1.json.enc",
+        secrets_filepath=TEST_DATA_DIR / "secrets-1.yml.enc",
         master_key_filepath=TEST_DATA_DIR / "master-1.key",
     )
-    assert vault.get("my-password") == "supersecret"
+    assert vault.get("database_url") == "supersecret"
 
 
 def test_requires_master_key():
     SecretsVault.create(
-        secrets_filepath=TEST_DATA_DIR / "secrets-2.json.enc",
+        secrets_filepath=TEST_DATA_DIR / "secrets-2.yml.enc",
         master_key_filepath=TEST_DATA_DIR / "master-2.key",
     )
 
     try:
         SecretsVault(
-            secrets_filepath=TEST_DATA_DIR / "secrets-2.json.enc",
+            secrets_filepath=TEST_DATA_DIR / "secrets-2.yml.enc",
             master_key_filepath=TEST_DATA_DIR / "master-456.key",
         )
         assert False, "Should throw"
@@ -44,7 +44,7 @@ def test_requires_master_key():
 
 def test_provides_master_key_via_env_var():
     SecretsVault.create(
-        secrets_filepath=TEST_DATA_DIR / "secrets-2a.json.enc",
+        secrets_filepath=TEST_DATA_DIR / "secrets-2a.yml.enc",
         master_key_filepath=TEST_DATA_DIR / "master-2a.key",
     )
 
@@ -53,10 +53,10 @@ def test_provides_master_key_via_env_var():
         os.environ["MASTER_KEY"] = master_key
 
     vault = SecretsVault(
-        secrets_filepath=TEST_DATA_DIR / "secrets-2a.json.enc",
+        secrets_filepath=TEST_DATA_DIR / "secrets-2a.yml.enc",
         master_key_filepath=None,
     )
-    assert vault.get("my-password") == "supersecret"
+    assert vault.get("database_url") == "supersecret"
 
     # Cleanup to not affect other tests
     del os.environ["MASTER_KEY"]
@@ -64,13 +64,13 @@ def test_provides_master_key_via_env_var():
 
 def test_requires_secrets_file():
     SecretsVault.create(
-        secrets_filepath=TEST_DATA_DIR / "secrets-3.json.enc",
+        secrets_filepath=TEST_DATA_DIR / "secrets-3.yml.enc",
         master_key_filepath=TEST_DATA_DIR / "master-3.key",
     )
 
     try:
         SecretsVault(
-            secrets_filepath=TEST_DATA_DIR / "secrets-456.json.enc",
+            secrets_filepath=TEST_DATA_DIR / "secrets-456.yml.enc",
             master_key_filepath=TEST_DATA_DIR / "master-3.key",
         )
         assert False, "Should throw"
@@ -80,16 +80,16 @@ def test_requires_secrets_file():
 
 def test_save():
     SecretsVault.create(
-        secrets_filepath=TEST_DATA_DIR / "secrets-4.json.enc",
+        secrets_filepath=TEST_DATA_DIR / "secrets-4.yml.enc",
         master_key_filepath=TEST_DATA_DIR / "master-4.key",
     )
 
     vault = SecretsVault(
-        secrets_filepath=TEST_DATA_DIR / "secrets-4.json.enc",
+        secrets_filepath=TEST_DATA_DIR / "secrets-4.yml.enc",
         master_key_filepath=TEST_DATA_DIR / "master-4.key",
     )
 
-    assert vault.get("my-password") == "supersecret"
+    assert vault.get("database_url") == "supersecret"
     assert vault.get("hello") is None
     assert vault.get("nested") is None
 
@@ -101,14 +101,55 @@ def test_save():
     assert vault.get("nested") == {"object": "value"}
 
 
+def test_format():
+    # default is yaml
+    vault, master_key = SecretsVault.create(
+        secrets_filepath=TEST_DATA_DIR / "secrets-4f.yml.enc",
+        master_key_filepath=TEST_DATA_DIR / "master-4f.key",
+    )
+
+    # check wrote yaml
+    with open(TEST_DATA_DIR / "secrets-4f.yml.enc", "rb") as fin:
+        contents = vault.backend.decrypt(fin.read()).decode()
+    assert "# Add your secrets below, comments are supported too." in contents
+    assert "database_url: supersecret" in contents
+
+    # saving preserves format
+    vault.set("hello", "world")
+    vault.save()
+    with open(TEST_DATA_DIR / "secrets-4f.yml.enc", "rb") as fin:
+        contents = vault.backend.decrypt(fin.read()).decode()
+        assert "# Add your secrets below, comments are supported too." in contents
+        assert "database_url: supersecret" in contents
+        assert "hello: world" in contents
+
+    # can change format
+    vault.file_format = "json"
+    vault.save()
+
+    with open(TEST_DATA_DIR / "secrets-4f.yml.enc", "rb") as fin:
+        contents = vault.backend.decrypt(fin.read()).decode()
+        assert "# Add your secrets below, comments are supported too." not in contents
+        assert '"database_url": "supersecret"' in contents
+        assert '"hello": "world"' in contents
+
+    # and can read back in new format
+    vault = SecretsVault(
+        secrets_filepath=TEST_DATA_DIR / "secrets-4f.yml.enc",
+        master_key_filepath=TEST_DATA_DIR / "master-4f.key",
+        file_format="json",
+    )
+    assert vault.get("database_url") == "supersecret"
+
+
 def test_large_secrets_file():
     SecretsVault.create(
-        secrets_filepath=TEST_DATA_DIR / "secrets-5.json.enc",
+        secrets_filepath=TEST_DATA_DIR / "secrets-5.yml.enc",
         master_key_filepath=TEST_DATA_DIR / "master-5.key",
     )
 
     vault = SecretsVault(
-        secrets_filepath=TEST_DATA_DIR / "secrets-5.json.enc",
+        secrets_filepath=TEST_DATA_DIR / "secrets-5.yml.enc",
         master_key_filepath=TEST_DATA_DIR / "master-5.key",
     )
 
@@ -122,13 +163,13 @@ def test_large_secrets_file():
 
 def test_wrong_key():
     SecretsVault.create(
-        secrets_filepath=TEST_DATA_DIR / "secrets-6.json.enc",
+        secrets_filepath=TEST_DATA_DIR / "secrets-6.yml.enc",
         master_key_filepath=TEST_DATA_DIR / "master-6.key",
     )
 
     try:
         SecretsVault(
-            secrets_filepath=TEST_DATA_DIR / "secrets-6.json.enc",
+            secrets_filepath=TEST_DATA_DIR / "secrets-6.yml.enc",
             master_key_filepath=TEST_DATA_DIR / "master-5.key",
         )
         assert False, "Should throw"

@@ -1,0 +1,4 @@
+.git
+venv
+./secrets.*.enc
+./master.key

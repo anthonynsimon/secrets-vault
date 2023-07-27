@@ -164,3 +164,4 @@ secrets.json.enc
 secrets.yml.enc
 tests/test-data/*
 !tests/fixtures/*
+.env

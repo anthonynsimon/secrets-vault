@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.2.1
-- Fix envify output can be used by dotenv or environs lib
+- Fix envify output so it can be used by dotenv or environs lib
 
 ## 0.2.0
 - Add support for yaml encoded vault files (new default). To use the old json format, pass `--format json` to the CLI.

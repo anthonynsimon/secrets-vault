@@ -23,7 +23,7 @@ def test_create():
         secrets_filepath=TEST_DATA_DIR / "secrets-1.yml.enc",
         master_key_filepath=TEST_DATA_DIR / "master-1.key",
     )
-    assert vault.get("database_url") == "supersecret"
+    assert vault.get("database-url") == "postgres://user:pass@localhost:5432/dev"
 
 
 def test_requires_master_key():
@@ -56,7 +56,7 @@ def test_provides_master_key_via_env_var():
         secrets_filepath=TEST_DATA_DIR / "secrets-2a.yml.enc",
         master_key_filepath=None,
     )
-    assert vault.get("database_url") == "supersecret"
+    assert vault.get("database-url") == "postgres://user:pass@localhost:5432/dev"
 
     # Cleanup to not affect other tests
     del os.environ["MASTER_KEY"]
@@ -89,7 +89,7 @@ def test_save():
         master_key_filepath=TEST_DATA_DIR / "master-4.key",
     )
 
-    assert vault.get("database_url") == "supersecret"
+    assert vault.get("database-url") == "postgres://user:pass@localhost:5432/dev"
     assert vault.get("hello") is None
     assert vault.get("nested") is None
 
@@ -112,7 +112,7 @@ def test_format():
     with open(TEST_DATA_DIR / "secrets-4f.yml.enc", "rb") as fin:
         contents = vault.backend.decrypt(fin.read()).decode()
     assert "# Add your secrets below, comments are supported too." in contents
-    assert "database_url: supersecret" in contents
+    assert "database-url: postgres://user:pass@localhost:5432/dev" in contents
 
     # saving preserves format
     vault.set("hello", "world")
@@ -120,7 +120,7 @@ def test_format():
     with open(TEST_DATA_DIR / "secrets-4f.yml.enc", "rb") as fin:
         contents = vault.backend.decrypt(fin.read()).decode()
         assert "# Add your secrets below, comments are supported too." in contents
-        assert "database_url: supersecret" in contents
+        assert "database-url: postgres://user:pass@localhost:5432/dev" in contents
         assert "hello: world" in contents
 
     # can change format
@@ -130,7 +130,7 @@ def test_format():
     with open(TEST_DATA_DIR / "secrets-4f.yml.enc", "rb") as fin:
         contents = vault.backend.decrypt(fin.read()).decode()
         assert "# Add your secrets below, comments are supported too." not in contents
-        assert '"database_url": "supersecret"' in contents
+        assert '"database-url": "postgres://user:pass@localhost:5432/dev"' in contents
         assert '"hello": "world"' in contents
 
     # and can read back in new format
@@ -139,7 +139,7 @@ def test_format():
         master_key_filepath=TEST_DATA_DIR / "master-4f.key",
         file_format="json",
     )
-    assert vault.get("database_url") == "supersecret"
+    assert vault.get("database-url") == "postgres://user:pass@localhost:5432/dev"
 
 
 def test_large_secrets_file():

@@ -28,18 +28,18 @@ $ secrets edit
 >> Opening secrets file in editor...
 
 # Add your secrets below, comments are supported too.
-# django:
-#     secret_key: abc
+# dev:
+#     secret-key: abc123
 #
-# database_url: supersecret
+# database-url: postgres://user:pass@localhost:5432/dev
 ```
 
 4. Read secrets:
 
 ```bash
 # Via CLI
-$ secrets get database_url
-> supersecret
+$ secrets get database-url
+> postgres://user:pass@localhost:5432/dev
 ```
 
 ```python
@@ -47,7 +47,7 @@ $ secrets get database_url
 from secrets_vault import SecretsVault
 
 vault = SecretsVault()
-foo = vault.get('database_url')
+foo = vault.get('database-url')
 ```
 
 **Important:** You should keep the `master.key` secret, do NOT commit it. Ignore it in your `.gitignore` file. The `secrets.yml.enc` file is encrypted and can be committed.
@@ -91,17 +91,17 @@ List all secrets:
 $ secrets get
 
 # Add your secrets below, comments are supported too.
-# django:
-#     secret_key: abc
+# dev:
+#     secret-key: abc123
 #
-# database_url: supersecret
+# database-url: postgres://user:pass@localhost:5432/dev
 ```
 
 Get a secret:
 
 ```bash
-$ secrets get database_url
-> supersecret
+$ secrets get database-url
+> postgres://user:pass@localhost:5432/dev
 ```
 
 Traverse nested objects:
@@ -109,15 +109,15 @@ Traverse nested objects:
 ```bash
 $ secrets get
 
-django:
- secret_key: abc
+dev:
+ secret-key: abc123
  admins: [zero, one, two three]
 
-database_url: supersecret
+database-url: postgres://user:pass@localhost:5432/dev
 ```
 
 ```bash
-$ secrets get django.admins.2
+$ secrets get dev.admins.2
 
 > two
 ```
@@ -132,7 +132,7 @@ from secrets_vault import SecretsVault
 
 vault = SecretsVault()
 
-admins = vault.get('django.admins')
+admins = vault.get('dev.admins')
 ```
 
 
@@ -156,10 +156,10 @@ $ secrets edit
 >> Opening secrets file in editor...
 
 # Add your secrets below, comments are supported too.
-# django:
-#     secret_key: abc
+# dev:
+#     secret-key: abc123
 #
-# database_url: supersecret
+# database-url: postgres://user:pass@localhost:5432/dev
 ```
 
 Any saved changes will be encrypted and saved to the file on disk when you close the editor.
@@ -209,15 +209,8 @@ $ secrets edit
 aws-credentials:
     aws-access-key-id: abc123
     aws-secret-access-key: abc456
-```
-
-Get will print the secrets as-is:
-
-```bash
-$ secrets get aws-credentials
-
-aws-access-key-id: abc123
-aws-secret-access-key: abc456
+    
+database-url: postgres://user:pass@localhost:5432/dev
 ```
 
 Envify will print the secrets ready for consumption as environment variables:
@@ -229,11 +222,22 @@ AWS_ACCESS_KEY_ID=abc123
 AWS_SECRET_ACCESS_KEY=abc456
 ```
 
-A few conventions are applied:
+You can also print the entire vault as environment variables:
+
+```bash
+$ secrets envify
+
+AWS_CREDENTIALS={"aws-access-key-id": "abc123", "aws-secret-access-key": "abc456"}
+DATABASE_URL=postgres://user:pass@localhost:5432/dev
+```
+
+The following conventions are applied:
 - The key is uppercased
 - Dashes are replaced with underscores
 - Values are serialized as plain-text (eg. strings and numbers) 
 - Objects are JSON encoded (eg. lists and dicts) 
+
+### Consuming the output of envify
 
 You can then use it in your shell like this:
 

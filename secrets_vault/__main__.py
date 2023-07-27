@@ -111,7 +111,7 @@ def with_vault(ctx, func):
         exit(1)
 
 
-@cli.command(help="Get a secret value. If none are specified, all secrets are printed (eg. `secrets get`).")
+@cli.command(help="Get a secret value. If no specific key is provided, all secrets are printed.")
 @click.argument("key", required=False)
 @click.pass_context
 def get(ctx, key):
@@ -129,9 +129,9 @@ def get(ctx, key):
 
 
 @cli.command(
-    help="Prints a provided secret key as one or more env variables. In case the value is a nested object, it will flatten the key=value pairs."
+    help="Prints a secret as an environment variable (eg. KEY=value). If no specific key is provided, all secrets are printed."
 )
-@click.argument("key")
+@click.argument("key", required=False)
 @click.option("--export", is_flag=True, help="Include the export modified for each environment variable.")
 @click.pass_context
 def envify(ctx, key, export):
@@ -140,12 +140,16 @@ def envify(ctx, key, export):
     )
 
     def handler(vault):
-        value = vault.get(key)
-        if isinstance(value, dict):
-            for k, v in value.items():
-                puts(k, v)
+        if key:
+            value = vault.get(key)
+            if isinstance(value, dict):
+                for k, v in value.items():
+                    puts(k, v)
+            else:
+                puts(key, value)
         else:
-            puts(key, value)
+            for k, v in vault.secrets.items():
+                puts(k, v)
 
     with_vault(ctx, handler)
 

@@ -180,15 +180,15 @@ class SecretsVault:
         if file_format == "json":
             return json.dumps(
                 {
-                    "django": {"secret_key": "abc"},
-                    "database_url": "supersecret",
+                    "app": {"secret-key": "abc123"},
+                    "database-url": "postgres://user:pass@localhost:5432/dev",
                 }
             )
         elif file_format == "yaml":
             return """
 # Add your secrets below, comments are supported too.
-# django:
-#     secret_key: abc
+# app:
+#     secret-key: abc123
 
-database_url: supersecret
+database-url: postgres://user:pass@localhost:5432/dev
 """.strip()

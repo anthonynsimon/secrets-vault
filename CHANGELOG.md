@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.2
+- Add support to envify entire vault
+
 ## 0.2.1
 - Fix envify output so it can be used by dotenv or environs lib
 

@@ -5,6 +5,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
+import pydash
 from secrets_vault.backends import AES256GCMBackend
 from secrets_vault.constants import (
     DEFAULT_MASTER_KEY_FILEPATH,
@@ -60,17 +61,21 @@ class SecretsVault:
         return vault, master_key
 
     def require(self, key):
-        return self.secrets[key]
+        value = self.get(key, default=UNSET)
+        if value == UNSET:
+            raise KeyError(f"Secret {key} not found in secrets vault")
+        return value
 
     def get(self, key, default=None):
-        return self.secrets.get(key, default)
+        return pydash.get(self.secrets, key, default)
 
     def set(self, key, value):
-        self.secrets[key] = value
+        pydash.set_(self.secrets, key, value)
+        return self
 
     def delete(self, key):
-        if key in self.secrets:
-            del self.secrets[key]
+        pydash.unset(self.secrets, key)
+        return self
 
     def edit_secrets(self):
         """

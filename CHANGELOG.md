@@ -1,7 +1,8 @@
 # Changelog
 
-## next
-- Cleanup temp files used in editor mode
+## 0.1.12
+- Auto-delete any temp files created during edit command
+- Add support for nested paths in get/set commands
 
 ## 0.1.11
 - Fix editor mode

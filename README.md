@@ -67,7 +67,7 @@ Commands:
   del      Delete a secret.
   edit     Open the secrets vault in your configured $EDITOR.
   envify   Prints a provided secret key as one or more env variables.
-  get      Get one or more secret values.
+  get      Get a secret value.
   init     Generate a new secrets vault and master.key pair.
   set      Store a secret.
   version  Show the package version.
@@ -85,19 +85,38 @@ $ secrets get
 > my-password: supersecret
 ```
 
-Get one secret:
+Get a secret:
 
 ```bash
 $ secrets get my-password
 > supersecret
 ```
 
-Get multiple secrets:
+Traverse nested objects:
 
 ```bash
-$ secrets get my-user my-password
-> my-user: foo
-> my-password: supersecret
+$ secrets get
+
+{
+  "dev": {
+    "admins": [
+      "admin0@example.com",
+      "admin1@example.com",
+      "admin2@example.com"
+    ]
+  },
+  "prod": {
+    "admins": [
+      "admin5@example.com",
+    ]
+  }
+}
+```
+
+```bash
+$ secrets get dev.admins.2
+
+> admin2@example.com
 ```
 
 

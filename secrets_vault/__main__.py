@@ -83,22 +83,16 @@ def with_vault(ctx, func):
         exit(1)
 
 
-@cli.command(
-    help="Get one or more secret values. If none are specified, all secrets are printed (eg. `secrets get`). You can also provide multiple keys to retrive more than one secret at a time (eg. secrets get foo1 foo2 foo3)."
-)
-@click.argument("key", required=False, nargs=-1)
+@cli.command(help="Get a secret value. If none are specified, all secrets are printed (eg. `secrets get`).")
+@click.argument("key", required=False)
 @click.pass_context
 def get(ctx, key):
     def handler(vault):
         if key:
-            if len(key) == 1:
-                click.echo(serialize(vault.get(key[0])))
-            else:
-                for k in key:
-                    click.echo(f"{k}: {serialize(vault.get(k))}")
+            item = vault.get(key, default="")
+            click.echo(serialize(item))
         else:
-            for k, v in vault.secrets.items():
-                click.echo(f"{k}: {serialize(v)}")
+            click.echo(serialize(vault.secrets))
 
     with_vault(ctx, handler)
 

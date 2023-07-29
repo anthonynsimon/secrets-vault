@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.4
+- Add `--output` option and `--raw` flag to `envify` command
+
 ## 0.2.3
 - When using the edit command, only persist the vault if there were changes (incl. comments)
 

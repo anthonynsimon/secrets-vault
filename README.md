@@ -248,11 +248,13 @@ $ echo $AWS_ACCESS_KEY_ID
 abc123
 ```
 
-Or dump multiple secrets to a dotenv file:
+Dump output to a dotenv file:
 
 ```bash
-$ secrets envify aws-credentials >> .env
-$ secrets envify database-url >> .env
+$ secrets envify aws-credentials -o dotenv
+$ cat .env
+> AWS_ACCESS_KEY_ID=abc123
+> AWS_SECRET_ACCESS_KEY=abc456
 ```
 
 ## Providing the master.key file

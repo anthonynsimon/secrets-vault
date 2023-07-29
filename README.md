@@ -2,7 +2,7 @@
 
 Simple tool to keep your app secrets encrypted in-repo, decrypt using a `master.key`.
 
-The vault can be YAML or JSON encoded, and is encrypted using [AES-GCM-256 authenticated encryption](https://cryptography.io/en/latest/hazmat/primitives/aead/#cryptography.hazmat.primitives.ciphers.aead.AESGCM).
+The vault can be YAML (default) or JSON encoded, and is encrypted using [AES-GCM-256 authenticated encryption](https://cryptography.io/en/latest/hazmat/primitives/aead/#cryptography.hazmat.primitives.ciphers.aead.AESGCM).
 
 Inspired by Rails credentials - it pairs nicely with [mrsk](https://mrsk.dev). But it can be used as a standalone CLI tool or as a library. 
 
@@ -35,35 +35,22 @@ $ secrets edit
 4. Read secrets:
 
 ```bash
-# Via CLI
 $ secrets get database-url
+
 > postgres://user:pass@localhost:5432/dev
-```
-
-```python
-# In Python
-from secrets_vault import SecretsVault
-
-vault = SecretsVault()
-foo = vault.get('database-url')
 ```
 
 5. Consume secrets as environment variables:
 
 ```bash
 $ secrets envify production -o dotenv
+
 $ cat .env
+
 > DATABASE_URL=postgres://...
 > REDIS_URL=redis://...
 > COOKIE_SECRET=abc123
 ```
-
-
-
-
-
-
-
 
 **Important:** You should keep the `master.key` secret, do NOT commit it. Ignore it in your `.gitignore` file. The `secrets.yml.enc` file is encrypted and can be committed.
 

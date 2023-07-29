@@ -43,7 +43,7 @@ $ secrets get database-url
 5. Consume secrets as environment variables:
 
 ```bash
-$ secrets envify production -o dotenv
+$ secrets envify -o dotenv
 
 $ cat .env
 
@@ -253,8 +253,8 @@ abc123
 Dump output to a dotenv file:
 
 ```bash
-$ secrets envify aws-credentials -o dotenv
-$ cat .env
+$ secrets envify aws-credentials -o .env.aws
+$ cat .env.aws
 > AWS_ACCESS_KEY_ID=abc123
 > AWS_SECRET_ACCESS_KEY=abc456
 ```

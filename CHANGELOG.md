@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.6
+- Add support to provide a custom dotenv path to `envify` command, eg. `secrets envify staging -o .env.staging`
+
 ## 0.2.5
 - Fix serialize boolean values as `0,1` in envify command
 

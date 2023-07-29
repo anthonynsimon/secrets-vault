@@ -132,24 +132,42 @@ def get(ctx, key):
     help="Prints a secret as an environment variable (eg. KEY=value). If no specific key is provided, all secrets are printed."
 )
 @click.argument("key", required=False)
-@click.option("--export", is_flag=True, help="Include the export modified for each environment variable.")
+@click.option("-e", "--export", is_flag=True, help="Include the export modifier for each environment variable.")
+@click.option(
+    "-o",
+    "--output",
+    type=click.Choice(["dotenv", "stdout"]),
+    default="stdout",
+    help="Output the result in the specified format.",
+)
+@click.option("--raw", is_flag=True, help="When raw mode is enabled, the key=value is printed as stored on the vault.")
 @click.pass_context
-def envify(ctx, key, export):
-    puts = lambda k, v: click.echo(
-        f"{'export ' if export else ''}{k.upper().replace('-', '_')}={serialize(v, 'dotenv')}"
-    )
+def envify(ctx, key, export, output, raw):
+    def serialize_key(k):
+        return k if raw else k.upper().replace("-", "_")
+
+    def write(obj):
+        serialized = [
+            f"{'export ' if export else ''}{serialize_key(k)}={serialize(v, 'dotenv')}" for k, v in obj.items()
+        ]
+        if output == "dotenv":
+            with open(".env", "w") as f:
+                f.write("\n".join(serialized))
+        elif output == "stdout":
+            for line in serialized:
+                click.echo(line)
+        else:
+            raise NotImplementedError(f"Unsupported output format: {output}")
 
     def handler(vault):
         if key:
             value = vault.get(key)
             if isinstance(value, dict):
-                for k, v in value.items():
-                    puts(k, v)
+                write(value)
             else:
-                puts(key, value)
+                write({key: value})
         else:
-            for k, v in vault.secrets.items():
-                puts(k, v)
+            write(vault.secrets)
 
     with_vault(ctx, handler)
 

@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.5
+- Fix serialize boolean values as `0,1` in envify command
+
 ## 0.2.4
 - Add `--output` option and `--raw` flag to `envify` command
 

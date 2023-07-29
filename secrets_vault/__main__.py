@@ -11,6 +11,8 @@ from secrets_vault import SecretsVault, exceptions, constants, __version__
 def serialize(v, format="yaml"):
     assert format in {"yaml", "json", "dotenv"}
 
+    if isinstance(v, bool) and format == "dotenv":
+        return "1" if v else "0"
     if not v:
         return ""
     if isinstance(v, str):

@@ -1,10 +1,10 @@
 # secrets-vault
 
-Keep your app secrets encrypted in-repo, automatically decrypt on local dev or deploy.
+Simple tool to keep your app secrets encrypted in-repo, decrypt using a `master.key`.
+
+The vault can be YAML (default) or JSON encoded, and is encrypted using [AES-GCM-256 authenticated encryption](https://cryptography.io/en/latest/hazmat/primitives/aead/#cryptography.hazmat.primitives.ciphers.aead.AESGCM).
 
 Inspired by Rails credentials - it pairs nicely with [mrsk](https://mrsk.dev). But it can be used as a standalone CLI tool or as a library. 
-
-The vault is YAML encoded and encrypted using [AES-GCM-256 authenticated encryption](https://cryptography.io/en/latest/hazmat/primitives/aead/#cryptography.hazmat.primitives.ciphers.aead.AESGCM).
 
 ## Quick start
 
@@ -21,11 +21,9 @@ Generated new secrets vault at ./secrets.yml.enc
 Generated new master key at ./master.key - keep it safe!
  ``` 
 
-3. Edit secrets:
+3. Open vault in your editor:
 ```bash
 $ secrets edit
-
->> Opening secrets file in editor...
 
 # Add your secrets below, comments are supported too.
 # dev:
@@ -37,17 +35,21 @@ $ secrets edit
 4. Read secrets:
 
 ```bash
-# Via CLI
 $ secrets get database-url
+
 > postgres://user:pass@localhost:5432/dev
 ```
 
-```python
-# In Python
-from secrets_vault import SecretsVault
+5. Consume secrets as environment variables:
 
-vault = SecretsVault()
-foo = vault.get('database-url')
+```bash
+$ secrets envify production -o dotenv
+
+$ cat .env
+
+> DATABASE_URL=postgres://...
+> REDIS_URL=redis://...
+> COOKIE_SECRET=abc123
 ```
 
 **Important:** You should keep the `master.key` secret, do NOT commit it. Ignore it in your `.gitignore` file. The `secrets.yml.enc` file is encrypted and can be committed.
@@ -248,11 +250,13 @@ $ echo $AWS_ACCESS_KEY_ID
 abc123
 ```
 
-Or dump multiple secrets to a dotenv file:
+Dump output to a dotenv file:
 
 ```bash
-$ secrets envify aws-credentials >> .env
-$ secrets envify database-url >> .env
+$ secrets envify aws-credentials -o dotenv
+$ cat .env
+> AWS_ACCESS_KEY_ID=abc123
+> AWS_SECRET_ACCESS_KEY=abc456
 ```
 
 ## Providing the master.key file

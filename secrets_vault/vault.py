@@ -7,9 +7,8 @@ from io import BytesIO
 from pathlib import Path
 
 import pydash
-from ruamel.yaml import YAML
 
-from secrets_vault import exceptions, constants
+from secrets_vault import exceptions, constants, formatters
 
 log = logging.getLogger(__name__)
 
@@ -141,18 +140,16 @@ class SecretsVault:
 
     def _deserialize(self, data: bytes) -> dict:
         if self.file_format in {"yaml", "json"}:
-            yaml = YAML(typ="rt")
             fin = BytesIO(data)
-            return yaml.load(fin)
+            return formatters.yaml.load(fin)
         raise NotImplementedError(f"Unknown file_format {self.file_format}")
 
     def _serialize(self, data: dict) -> bytes:
         if self.file_format == "json":
             return json.dumps(data, indent=4).encode()
         elif self.file_format == "yaml":
-            yaml = YAML(typ="rt")
             fout = BytesIO()
-            yaml.dump(data, fout)
+            formatters.yaml.dump(data, fout)
             result = fout.getvalue()
             fout.close()
             return result

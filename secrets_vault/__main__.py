@@ -3,9 +3,8 @@ import logging
 from io import BytesIO
 
 import click
-from ruamel.yaml import YAML
 
-from secrets_vault import SecretsVault, exceptions, constants, __version__
+from secrets_vault import SecretsVault, exceptions, constants, __version__, formatters
 
 
 def serialize(v, format="yaml"):
@@ -28,8 +27,7 @@ def serialize(v, format="yaml"):
         return json.dumps(v, default=str, sort_keys=False)
     if format == "yaml":
         fout = BytesIO()
-        yaml = YAML(typ="rt")
-        yaml.dump(v, fout)
+        formatters.yaml.dump(v, fout)
         result = fout.getvalue().decode()
         fout.close()
         return result.strip()

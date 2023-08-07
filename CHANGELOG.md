@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.7
+- Fix roundtrip yaml wrapping lines
+
 ## 0.2.6
 - Add support to provide a custom dotenv path to `envify` command, eg. `secrets envify staging -o .env.staging`
 

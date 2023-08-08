@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.8
+- Fix envify int boolean values
+
 ## 0.2.7
 - Fix roundtrip yaml wrapping lines
 

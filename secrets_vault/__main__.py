@@ -12,7 +12,7 @@ def serialize(v, format="yaml"):
 
     if isinstance(v, bool) and format == "dotenv":
         return "1" if v else "0"
-    if not v:
+    if v is None:
         return ""
     if isinstance(v, str):
         return v

@@ -1,8 +1,8 @@
 # secrets-vault
 
-Simple tool to keep your app secrets encrypted in-repo, decrypt using a `master.key`.
+Simple tool to keep your app secrets encrypted in-repo. Easily decrypt using a `master.key`.
 
-The vault can be YAML (default) or JSON encoded, and is encrypted using [AES-GCM-256 authenticated encryption](https://cryptography.io/en/latest/hazmat/primitives/aead/#cryptography.hazmat.primitives.ciphers.aead.AESGCM).
+The vault is YAML encoded by default, and is encrypted using [AES-GCM-256 authenticated encryption](https://cryptography.io/en/latest/hazmat/primitives/aead/#cryptography.hazmat.primitives.ciphers.aead.AESGCM).
 
 Inspired by Rails credentials - it pairs nicely with [mrsk](https://mrsk.dev). But it can be used as a standalone CLI tool or as a library. 
 

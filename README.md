@@ -1,4 +1,9 @@
 # secrets-vault
+[![PyPi Latest Version](https://img.shields.io/pypi/v/secrets-vault)](https://pypi.org/project/secrets-vault/)
+[![PyPi Downloads](https://img.shields.io/pypi/dm/secrets-vault)](https://pypi.org/project/secrets-vault/)
+[![License](https://img.shields.io/github/license/anthonynsimon/secrets-vault)](https://github.com/anthonynsimon/secrets-vault/blob/master/LICENSE)
+
+
 
 Simple tool to keep your app secrets encrypted in-repo. Easily decrypt using a `master.key`.
 

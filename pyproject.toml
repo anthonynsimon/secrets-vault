@@ -38,7 +38,6 @@ secrets = "secrets_vault.__main__:cli"
 # to handle development dependencies.
 [dependency-groups]
 dev = [
-    "black==23.1.0",
     "pytest==7.4.0",
     "twine==4.0.2",
     "wheel==0.40.0",

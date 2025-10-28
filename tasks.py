@@ -3,10 +3,9 @@ import invoke
 
 @invoke.task
 def fmt(ctx, check=False):
-    cmds = ["black", "-l", "120", "-t", "py311"]
+    cmds = ["uv", "format"]
     if check:
         cmds.append("--check")
-    cmds.append(".")
     ctx.run(" ".join(cmds))
 
 

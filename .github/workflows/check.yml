@@ -30,4 +30,4 @@ jobs:
         uv sync --frozen
 
     - name: Check codebase
-      run: inv fmt --check && inv test
+      run: uv run inv fmt --check && uv run inv test

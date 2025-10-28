@@ -23,12 +23,12 @@ jobs:
         uv sync --frozen
 
     - name: Check codebase
-      run: inv fmt --check && inv test
+      run: uv run inv fmt --check && uv run inv test
 
     - name: Build
-      run: inv build
+      run: uv run inv build
 
     - name: Publish to PyPI
       env:
         PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
-      run: inv publish --token "$PYPI_API_TOKEN"
+      run: uv run inv publish --token "$PYPI_API_TOKEN"

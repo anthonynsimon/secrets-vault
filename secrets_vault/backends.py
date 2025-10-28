@@ -22,7 +22,9 @@ class AES256GCMBackend:
             key = bytes.fromhex(self.master_key)
             ciphertext = nonce + AESGCM(key).encrypt(nonce, contents, b"")
             encoded = base64.b64encode(ciphertext)
-            return "\n".join(textwrap.wrap(encoded.decode("utf8"), width=80)).encode("utf8")
+            return "\n".join(textwrap.wrap(encoded.decode("utf8"), width=80)).encode(
+                "utf8"
+            )
         except (InvalidTag, ValueError, TypeError):
             raise MasterKeyInvalid(
                 "The master key is invalid. Make sure it is set and you are using the correct one."

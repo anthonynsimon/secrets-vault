@@ -13,8 +13,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
-        cryptography-version: ["38.0.4", "41.0.2"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        cryptography-version: ["38.0.4", "41.0.7", "42.0.8", "43.0.3", "44.0.3", "45.0.7", "46.0.3"]
 
     steps:
     - uses: actions/checkout@v2

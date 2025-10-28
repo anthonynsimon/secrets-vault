@@ -1,5 +1,8 @@
 # Changelog
 
+## Next
+- Drop support for Python 2.7
+
 ## 0.3.0
 - Support for Python 3.8 - 3.14
 - Support latest cryptography lib version

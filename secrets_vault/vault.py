@@ -51,7 +51,11 @@ class SecretsVault:
         with open(master_key_filepath, "w") as fout:
             fout.write(master_key)
 
-        vault = SecretsVault(master_key=master_key, secrets_filepath=secrets_filepath, file_format=file_format)
+        vault = SecretsVault(
+            master_key=master_key,
+            secrets_filepath=secrets_filepath,
+            file_format=file_format,
+        )
 
         example = cls._get_example(file_format)
 
@@ -83,7 +87,9 @@ class SecretsVault:
         """
         editor = os.environ.get("EDITOR", "").split(" ")  # 'could be "code --wait"'
         if not editor:
-            raise RuntimeError("No interactive editor set. Set it as an environment variable 'EDITOR'")
+            raise RuntimeError(
+                "No interactive editor set. Set it as an environment variable 'EDITOR'"
+            )
 
         filedesc, filename = tempfile.mkstemp(suffix=".yml")
         try:
@@ -98,7 +104,9 @@ class SecretsVault:
                 try:
                     newsecrets = self._deserialize(fin.read())
                 except Exception as e:
-                    raise exceptions.MalformedSecretsFile(f"Could not parse secrets file: {e}")
+                    raise exceptions.MalformedSecretsFile(
+                        f"Could not parse secrets file: {e}"
+                    )
 
             if self._serialize(newsecrets) == self._serialize(self.secrets):
                 log.info("No changes detected")
@@ -117,7 +125,9 @@ class SecretsVault:
     def load(self):
         log.info(f"Loading encrypted secrets from {self.secrets_filename}")
         if not os.path.exists(self.secrets_filename):
-            raise exceptions.SecretsFileNotFound(f"Could not find secrets file {self.secrets_filename}")
+            raise exceptions.SecretsFileNotFound(
+                f"Could not find secrets file {self.secrets_filename}"
+            )
         with open(self.secrets_filename, "rb") as fin:
             contents = fin.read()
             if contents:
@@ -128,7 +138,11 @@ class SecretsVault:
     @staticmethod
     def _load_master_key(master_key_filepath=None) -> str:
         master_key = os.environ.get("MASTER_KEY")
-        if not master_key and master_key_filepath and os.path.exists(master_key_filepath):
+        if (
+            not master_key
+            and master_key_filepath
+            and os.path.exists(master_key_filepath)
+        ):
             with open(Path(master_key_filepath).absolute(), "r") as fin:
                 master_key = fin.read().strip()
         if not master_key:
@@ -159,7 +173,9 @@ class SecretsVault:
     @classmethod
     def _prepare_dirs(cls, master_key_filepath, secrets_filepath):
         if Path(secrets_filepath).exists():
-            raise exceptions.SecretsFileAlreadyExists(f"Secrets file {secrets_filepath} already exists")
+            raise exceptions.SecretsFileAlreadyExists(
+                f"Secrets file {secrets_filepath} already exists"
+            )
         log.info(f"Creating new secrets file {secrets_filepath}")
         Path(master_key_filepath).parent.mkdir(parents=True, exist_ok=True)
         Path(secrets_filepath).parent.mkdir(parents=True, exist_ok=True)

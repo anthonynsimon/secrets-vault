@@ -1,8 +1,9 @@
 # Changelog
 
-## Next
+## 0.3.0
 - Support for Python 3.8 - 3.14
 - Support latest cryptography lib version
+- Migrate to uv for dev and packaging
 
 ## 0.2.8
 - Fix envify int boolean values

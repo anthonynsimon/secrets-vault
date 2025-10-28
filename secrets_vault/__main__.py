@@ -87,7 +87,9 @@ def init(ctx):
             file_format=ctx.obj["format"],
         )
         click.echo(f"Generated new secrets vault at {ctx.obj['secrets_filepath']}")
-        click.echo(f"Generated new master key at {ctx.obj['master_key_filepath']} - keep it safe!")
+        click.echo(
+            f"Generated new master key at {ctx.obj['master_key_filepath']} - keep it safe!"
+        )
     except exceptions.SecretsFileAlreadyExists:
         print("Secrets file already exists, aborting...")
         exit(1)
@@ -111,7 +113,9 @@ def with_vault(ctx, func):
         exit(1)
 
 
-@cli.command(help="Get a secret value. If no specific key is provided, all secrets are printed.")
+@cli.command(
+    help="Get a secret value. If no specific key is provided, all secrets are printed."
+)
 @click.argument("key", required=False)
 @click.pass_context
 def get(ctx, key):
@@ -132,14 +136,23 @@ def get(ctx, key):
     help="Prints a secret as an environment variable (eg. KEY=value). If no specific key is provided, all secrets are printed."
 )
 @click.argument("key", required=False)
-@click.option("-e", "--export", is_flag=True, help="Include the export modifier for each environment variable.")
+@click.option(
+    "-e",
+    "--export",
+    is_flag=True,
+    help="Include the export modifier for each environment variable.",
+)
 @click.option(
     "-o",
     "--output",
     default="stdout",
     help="Output the result to stdout or a given dotenv file. For example --output .env.staging",
 )
-@click.option("--raw", is_flag=True, help="When raw mode is enabled, the key=value is printed as stored on the vault.")
+@click.option(
+    "--raw",
+    is_flag=True,
+    help="When raw mode is enabled, the key=value is printed as stored on the vault.",
+)
 @click.pass_context
 def envify(ctx, key, export, output, raw):
     def serialize_key(k):
@@ -147,7 +160,8 @@ def envify(ctx, key, export, output, raw):
 
     def write(obj):
         serialized = [
-            f"{'export ' if export else ''}{serialize_key(k)}={serialize(v, 'dotenv')}" for k, v in obj.items()
+            f"{'export ' if export else ''}{serialize_key(k)}={serialize(v, 'dotenv')}"
+            for k, v in obj.items()
         ]
         if output == "stdout":
             for line in serialized:

@@ -17,5 +17,8 @@ database-url: postgres://user:pass@localhost:5432/dev
 """.strip()
 
 EXAMPLE_SECRETS_JSON = json.dumps(
-    {"app": {"secret-key": "abc123"}, "database-url": "postgres://user:pass@localhost:5432/dev"}
+    {
+        "app": {"secret-key": "abc123"},
+        "database-url": "postgres://user:pass@localhost:5432/dev",
+    }
 )

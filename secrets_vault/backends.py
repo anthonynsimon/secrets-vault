@@ -23,7 +23,9 @@ class AES256GCMBackend:
             ciphertext = nonce + AESGCM(key).encrypt(nonce, contents, b"")
             return base64.b64encode(ciphertext)
         except (InvalidTag, ValueError, TypeError):
-            raise MasterKeyInvalid("The master key is invalid. Make sure it is set and you are using the correct one.")
+            raise MasterKeyInvalid(
+                "The master key is invalid. Make sure it is set and you are using the correct one."
+            )
 
     def decrypt(self, contents: bytes) -> bytes:
         try:
@@ -31,7 +33,9 @@ class AES256GCMBackend:
             ciphertext = base64.b64decode(contents)
             return AESGCM(key).decrypt(ciphertext[:12], ciphertext[12:], b"")
         except (InvalidTag, ValueError, TypeError):
-            raise MasterKeyInvalid("The master key is invalid. Make sure it is set and you are using the correct one.")
+            raise MasterKeyInvalid(
+                "The master key is invalid. Make sure it is set and you are using the correct one."
+            )
 
     @staticmethod
     def generate_master_key() -> str:

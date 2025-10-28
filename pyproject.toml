@@ -26,16 +26,6 @@ dependencies = [
     "ruamel.yaml>=0.17.32",
 ]
 
-[project.urls]
-Homepage = "https://github.com/anthonynsimon/secrets-vault"
-Repository = "https://github.com/anthonynsimon/secrets-vault"
-
-[project.scripts]
-secrets-vault = "secrets_vault.__main__:cli"
-secrets = "secrets_vault.__main__:cli"
-
-# This replaces 'tests_require' and is the modern way
-# to handle development dependencies.
 [dependency-groups]
 dev = [
     "pytest==7.4.0",
@@ -43,6 +33,15 @@ dev = [
     "wheel==0.40.0",
     "invoke==2.2.1",
 ]
+
+
+[project.urls]
+Homepage = "https://github.com/anthonynsimon/secrets-vault"
+Repository = "https://github.com/anthonynsimon/secrets-vault"
+
+[project.scripts]
+secrets-vault = "secrets_vault.__main__:cli"
+secrets = "secrets_vault.__main__:cli"
 
 [tool.setuptools]
 include-package-data = true

@@ -4,16 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "secrets-vault"
-dynamic = ["version"]
+version = "0.3.0"
 authors = [
     { name = "Anthony N. Simon" },
 ]
 description = "Simple encrypted secrets for Python"
 readme = "README.md"
 requires-python = ">=3.9"
-license = { text = "MIT" }
+license = "MIT"
 classifiers = [
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3.9",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -29,8 +28,6 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest==7.4.0",
-    "twine==4.0.2",
-    "wheel==0.40.0",
     "invoke==2.2.1",
 ]
 
@@ -48,6 +45,3 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 exclude = ["tests"]
-
-[tool.setuptools.dynamic.version]
-file = "secrets_vault/version.py:__version__"

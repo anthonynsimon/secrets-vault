@@ -19,17 +19,16 @@ def test(ctx):
 @invoke.task
 def clean(ctx):
     ctx.run("rm -rf dist")
-    ctx.run("python setup.py clean --all")
 
 
 @invoke.task(clean)
 def build(ctx):
-    ctx.run("python setup.py sdist bdist_wheel")
+    ctx.run("uv build")
 
 
 @invoke.task()
 def publish(ctx, token=None):
-    cmds = ["twine", "upload"]
+    cmds = ["uv", "publish"]
     if token:
         cmds.extend(["--username", "__token__"])
         cmds.extend(["--password", token])

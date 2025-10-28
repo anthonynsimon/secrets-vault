@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "secrets-vault"
+dynamic = ["version"]
+authors = [
+    { name = "Anthony N. Simon" },
+]
+description = "Simple encrypted secrets for Python"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "cryptography>=38.0.4",
+    "click>=8.1.6",
+    "pydash>=7.0.5",
+    "ruamel.yaml>=0.17.32",
+]
+
+[project.urls]
+Homepage = "https://github.com/anthonynsimon/secrets-vault"
+Repository = "https://github.com/anthonynsimon/secrets-vault"
+
+[project.scripts]
+secrets-vault = "secrets_vault.__main__:cli"
+secrets = "secrets_vault.__main__:cli"
+
+# This replaces 'tests_require' and is the modern way
+# to handle development dependencies.
+[dependency-groups]
+dev = [
+    "black==23.1.0",
+    "pytest==7.4.0",
+    "twine==4.0.2",
+    "wheel==0.40.0",
+    "invoke==2.2.1",
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+exclude = ["tests"]
+
+[tool.setuptools.dynamic.version]
+file = "secrets_vault/version.py:__version__"

@@ -1,7 +1,8 @@
 # Changelog
 
-## Next
+## 0.4.0
 - Drop support for Python 2.7
+- Textwrap encrypted vault
 
 ## 0.3.0
 - Support for Python 3.8 - 3.14

@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-set -e
-
-docker build -f Dockerfile.py27 -t secrets-py27 .
-docker run secrets-py27

@@ -1,5 +1,9 @@
 # Changelog
 
+## Next
+- Support for Python 3.8 - 3.14
+- Support latest cryptography lib version
+
 ## 0.2.8
 - Fix envify int boolean values
 

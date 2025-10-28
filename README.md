@@ -9,7 +9,7 @@ Simple tool to keep your app secrets encrypted in-repo. Easily decrypt using a `
 
 The vault is YAML encoded by default, and is encrypted using [AES-GCM-256 authenticated encryption](https://cryptography.io/en/latest/hazmat/primitives/aead/#cryptography.hazmat.primitives.ciphers.aead.AESGCM).
 
-Inspired by Rails credentials - it pairs nicely with [mrsk](https://mrsk.dev). But it can be used as a standalone CLI tool or as a library. 
+Inspired by Rails credentials and pairs nicely with [kamal](https://kamal-deploy.org/). But it can be used as a standalone CLI tool or as a library. 
 
 ## Quick start
 

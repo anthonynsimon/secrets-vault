@@ -1,5 +1,8 @@
 # Changelog
 
+# Next
+- Textwrap encrypted vault
+
 ## 0.3.0
 - Support for Python 3.8 - 3.14
 - Support latest cryptography lib version
